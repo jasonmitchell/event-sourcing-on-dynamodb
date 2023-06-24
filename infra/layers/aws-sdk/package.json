@@ -1,0 +1,6 @@
+{
+  "name": "layer-aws-sdk",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.359.0"
+  }
+}
