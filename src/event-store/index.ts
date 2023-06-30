@@ -1,5 +1,4 @@
 import {DynamoDB} from "@aws-sdk/client-dynamodb";
-import {randomUUID} from "crypto";
 
 export type EventStore = {
   streamReader: StreamReader;
@@ -16,6 +15,7 @@ export type EventStream = {
 };
 
 export type Event = {
+  id: string;
   type: string;
   data: EventData;
   metadata?: EventMetadata;
@@ -61,6 +61,7 @@ const getStreamReader = (dynamoDB: DynamoDB, tableName: string): StreamReader =>
       id: streamId,
       version: version,
       events: events.map(event => ({
+        id: event.id,
         type: event.type,
         data: event.data,
         metadata: event.metadata
@@ -114,28 +115,27 @@ const writeStream = async (dynamoDB: DynamoDB, tableName: string, partitionSize:
   const latestVersion = existingEvents.length > 0 ? existingEvents[0].version : -1;
   const createdAt = new Date().toISOString();
 
-  // TODO: Concurrency testing
-  const startCommitPosition = await getCommitPosition(dynamoDB, tableName, events.length);
+  const startEventPosition = await getEventPosition(dynamoDB, tableName, events.length);
 
   // TODO: Transactional write if more than one event probably
   // TODO: Throw if version mismatch
   // TODO: Expected stream versions, not exists, etc
+  // TODO: Max number of items
   await dynamoDB.batchWriteItem({
     RequestItems: {
       [tableName]: events.map((event, index) => {
-        const id = randomUUID();
         const version = latestVersion + index + 1;
-        const commitPosition = startCommitPosition + index;
-        const eventsPartition = Math.floor(commitPosition / partitionSize);
+        const eventPosition = startEventPosition + index;
+        const eventPartition = Math.floor(eventPosition / partitionSize);
 
         return ({
           PutRequest: {
             Item: {
               pk: { S: streamId },
               sk: { N: version.toString() },
-              events_partition: { S: `partition#${eventsPartition}` },
-              commit_position: { N: commitPosition.toString() },
-              event_id: { S: id },
+              event_partition: { S: `partition#${eventPartition}` },
+              event_position: { N: eventPosition.toString() },
+              event_id: { S: event.id },
               event_type: { S: event.type },
               created_at: { S: createdAt },
               data: { S: JSON.stringify(event.data) },
@@ -148,19 +148,19 @@ const writeStream = async (dynamoDB: DynamoDB, tableName: string, partitionSize:
   });
 };
 
-const getCommitPosition = async (dynamoDB: DynamoDB, tableName: string, increment: number): Promise<number> => {
+const getEventPosition = async (dynamoDB: DynamoDB, tableName: string, increment: number): Promise<number> => {
   const result = await dynamoDB.updateItem({
     TableName: tableName,
     Key: {
       pk: { S: '$commit' },
       sk: { N: '0' }
     },
-    UpdateExpression: 'ADD next_commit_position :increment',
+    UpdateExpression: 'ADD next_event_position :increment',
     ExpressionAttributeValues: {
       ':increment': { N: increment.toString() }
     },
     ReturnValues: 'UPDATED_OLD'
   });
 
-  return result.Attributes?.next_commit_position?.N ? Number(result.Attributes.next_commit_position.N) : 0;
+  return result.Attributes?.next_event_position?.N ? Number(result.Attributes.next_event_position.N) : 0;
 };

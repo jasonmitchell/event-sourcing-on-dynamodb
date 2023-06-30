@@ -1,6 +1,7 @@
 import {connect, EventStore} from "./index";
 import {randomUUID} from "crypto";
 import {AttributeValue, DynamoDB} from "@aws-sdk/client-dynamodb";
+import {faker} from "@faker-js/faker";
 
 describe('Event Store', () => {
   const dynamoDB = new DynamoDB({ region: 'eu-west-1', endpoint:'http://localhost:8100' });
@@ -26,6 +27,7 @@ describe('Event Store', () => {
       const events = randomEvents(3);
 
       await eventStore.streamWriter(streamId, events.map(event => ({
+        id: randomUUID(),
         type: 'TestEvent',
         data: event,
         metadata: metadata
@@ -41,8 +43,8 @@ describe('Event Store', () => {
         expect(storedEvent).toEqual({
           stream_id: streamId,
           version: i,
-          events_partition: expect.any(String),
-          commit_position: i,
+          event_partition: expect.any(String),
+          event_position: i,
           created_at: expect.any(String),
           event_id: expect.stringMatching(/[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12}/),
           event_type: 'TestEvent',
@@ -60,38 +62,96 @@ describe('Event Store', () => {
       const streamId = `integration-test-${randomUUID()}`;
       const metadata = randomMetadata();
       const events = randomEvents(3);
-
-      await eventStore.streamWriter(streamId, events.map(event => ({
+      const eventData = events.map(event => ({
+        id: randomUUID(),
         type: 'TestEvent',
         data: event,
         metadata: metadata
-      })));
+      }))
+
+      await eventStore.streamWriter(streamId, eventData);
 
       const stream = await eventStore.streamReader(streamId);
       expect(stream.id).toEqual(streamId);
       expect(stream.version).toEqual(2);
-      expect(stream.events).toEqual(events.map(event => ({
+      expect(stream.events).toEqual(eventData.map(event => ({
+        id: event.id,
         type: 'TestEvent',
-        data: event,
-        metadata: metadata
+        data: event.data,
+        metadata: event.metadata
       })));
     });
   });
 
   describe('all events stream', () => {
-    it('increments commit position when appending events', async () => {
-      const streamA = `commit-position-${randomUUID()}`;
+    it('partitions events', async () => {
+      const streamA = `event-position-${randomUUID()}`;
       const metadataA = randomMetadata();
-      const streamB = `commit-position-${randomUUID()}`;
+      const eventsA = randomEvents(12);
+      const streamB = `event-position-${randomUUID()}`;
+      const metadataB = randomMetadata();
+      const eventsB = randomEvents(12);
+
+      const allEvents = [...eventsA, ...eventsB];
+      const partitions = [
+        allEvents.slice(0, 10),
+        allEvents.slice(10, 20),
+        allEvents.slice(20, 30)
+      ];
+
+      await eventStore.streamWriter(streamA, eventsA.map(event => ({
+        id: randomUUID(),
+        type: 'TestEvent',
+        data: event,
+        metadata: metadataA
+      })));
+
+      await eventStore.streamWriter(streamB, eventsB.map(event => ({
+        id: randomUUID(),
+        type: 'TestEvent',
+        data: event,
+        metadata: metadataB
+      })));
+
+      for (let i = 0; i < 3; i++) {
+        const partition = partitions[i];
+        const result = await dynamoDB.query({
+          TableName: tableName,
+          IndexName: 'all_events',
+          KeyConditionExpression: 'event_partition = :partition',
+          ExpressionAttributeValues: {
+            ':partition': {S: `partition#${i}`},
+          }
+        });
+
+        expect(result.Items!).toHaveLength(partition.length);
+
+        const eventsInPartition = result.Items!.map(dynamoRecordToEvent);
+        for (let j = 0; j < eventsInPartition.length; j++) {
+          const expectedEventPosition = j + (i * 10);
+          expect(eventsInPartition[j].event_position).toEqual(expectedEventPosition);
+        }
+
+        const eventData = eventsInPartition.map(e => e.data);
+        expect(eventData).toEqual(partition);
+      }
+    });
+
+    it('increments event position when appending events', async () => {
+      const streamA = `event-position-${randomUUID()}`;
+      const metadataA = randomMetadata();
+      const streamB = `event-position-${randomUUID()}`;
       const metadataB = randomMetadata();
 
       await eventStore.streamWriter(streamA, randomEvents(3).map(event => ({
+        id: randomUUID(),
         type: 'TestEvent',
         data: event,
         metadata: metadataA
       })));
 
       await eventStore.streamWriter(streamB, randomEvents(3).map(event => ({
+        id: randomUUID(),
         type: 'TestEvent',
         data: event,
         metadata: metadataB
@@ -107,58 +167,55 @@ describe('Event Store', () => {
 
       expect(commitResult.Items!).toHaveLength(1);
 
-      const commitPosition = Number(commitResult.Items![0].next_commit_position.N);
-      expect(commitPosition).toEqual(6);
+      const eventPosition = Number(commitResult.Items![0].next_event_position.N);
+      expect(eventPosition).toEqual(6);
     });
 
-    it('partitions events', async () => {
-      const streamA = `commit-position-${randomUUID()}`;
-      const metadataA = randomMetadata();
-      const eventsA = randomEvents(12);
-      const streamB = `commit-position-${randomUUID()}`;
-      const metadataB = randomMetadata();
-      const eventsB = randomEvents(12);
+    it('handles concurrent writes when setting event position', async () => {
+      const delay = (timeout: number) => new Promise((resolve: any) => {
+        setTimeout(resolve, timeout)
+      });
 
-      const allEvents = [...eventsA, ...eventsB];
-      const partitions = [
-        allEvents.slice(0, 10),
-        allEvents.slice(10, 20),
-        allEvents.slice(20, 30)
-      ];
+      const writeSomeEvents = async () => {
+        await delay(faker.number.int({ min: 1, max: 25 }));
 
-      await eventStore.streamWriter(streamA, eventsA.map(event => ({
-        type: 'TestEvent',
-        data: event,
-        metadata: metadataA
-      })));
+        const stream = `concurrency-${randomUUID()}`;
+        const events = randomEvents(faker.number.int({ min: 8, max: 25 }));
+        await eventStore.streamWriter(stream, events.map(event => ({
+          id: randomUUID(),
+          type: 'TestEvent',
+          data: event
+        })));
+      };
 
-      await eventStore.streamWriter(streamB, eventsB.map(event => ({
-        type: 'TestEvent',
-        data: event,
-        metadata: metadataB
-      })));
+      const writes = [...Array(50).keys()].map(() => writeSomeEvents());
+      await Promise.all(writes);
 
-      for (let i = 0; i < 3; i++) {
-        const partition = partitions[i];
+      const commitResult = await dynamoDB.query({
+        TableName: tableName,
+        KeyConditionExpression: 'pk = :stream_id',
+        ExpressionAttributeValues: {
+          ':stream_id': {S: '$commit'}
+        }
+      });
+
+      const nextEventPosition = Number(commitResult.Items![0].next_event_position.N);
+      const totalPartitions = Math.ceil(nextEventPosition / 10);
+      for (let i = 0; i < totalPartitions; i++) {
         const result = await dynamoDB.query({
           TableName: tableName,
           IndexName: 'all_events',
-          KeyConditionExpression: 'events_partition = :partition',
+          KeyConditionExpression: 'event_partition = :partition',
           ExpressionAttributeValues: {
             ':partition': {S: `partition#${i}`},
           }
         });
 
-        expect(result.Items!).toHaveLength(partition.length);
-
         const eventsInPartition = result.Items!.map(dynamoRecordToEvent);
         for (let j = 0; j < eventsInPartition.length; j++) {
-          const expectedCommitPosition = j + (i * 10);
-          expect(eventsInPartition[j].commit_position).toEqual(expectedCommitPosition);
+          const expectedEventPosition = j + (i * 10);
+          expect(eventsInPartition[j].event_position).toEqual(expectedEventPosition);
         }
-
-        const eventData = eventsInPartition.map(e => e.data);
-        expect(eventData).toEqual(partition);
       }
     });
   });
@@ -200,8 +257,8 @@ const createTable = async (dynamoDB: DynamoDB, tableName: string) => {
       {
         IndexName: 'all_events',
         KeySchema: [
-          {AttributeName: 'events_partition', KeyType: 'HASH'},
-          {AttributeName: 'commit_position', KeyType: 'RANGE'}
+          {AttributeName: 'event_partition', KeyType: 'HASH'},
+          {AttributeName: 'event_position', KeyType: 'RANGE'}
         ],
         Projection: {
           ProjectionType: 'ALL'
@@ -211,8 +268,8 @@ const createTable = async (dynamoDB: DynamoDB, tableName: string) => {
     AttributeDefinitions: [
       {AttributeName: 'pk', AttributeType: 'S'},
       {AttributeName: 'sk', AttributeType: 'N'},
-      {AttributeName: 'events_partition', AttributeType: 'S'},
-      {AttributeName: 'commit_position', AttributeType: 'N'}
+      {AttributeName: 'event_partition', AttributeType: 'S'},
+      {AttributeName: 'event_position', AttributeType: 'N'}
     ]
   });
 }
@@ -228,8 +285,8 @@ const readStreamRaw = async (dynamoDB: DynamoDB, tableName: string) => {
 const dynamoRecordToEvent = (item: Record<string, AttributeValue>) => ({
   stream_id: item.pk.S!,
   version: Number(item.sk.N!),
-  events_partition: item.events_partition.S!,
-  commit_position: Number(item.commit_position.N!),
+  event_partition: item.event_partition.S!,
+  event_position: Number(item.event_position.N!),
   created_at: item.created_at.S!,
   event_id: item.event_id.S!,
   event_type: item.event_type.S!,

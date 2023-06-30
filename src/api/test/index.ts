@@ -1,6 +1,7 @@
 import {APIGatewayProxyResult, APIGatewayEvent} from 'aws-lambda';
 import {getRequestModel} from '../req';
 import {connect} from "../../event-store";
+import {randomUUID} from "crypto";
 
 type TestEvent = {
   count: number;
@@ -18,6 +19,7 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
   console.log(stream);
 
   const newEvent = {
+    id: randomUUID(),
     type: 'test',
     data: testEvent,
     metadata: {
