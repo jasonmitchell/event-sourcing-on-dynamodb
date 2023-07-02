@@ -3,30 +3,69 @@ import { Event } from './types';
 import { readEvents } from './stream-reader';
 import { getNextEventPosition } from './event-position';
 
-export type StreamWriter = (streamId: string, events: Event[]) => Promise<void>;
+export type ExpectedVersion = 'any' | 'no_stream' | number;
 
-// TODO: expected version
+export type WriteOptions = {
+  expectedVersion?: ExpectedVersion;
+};
+
+export type WriteStreamResult = SuccessfulWriteStreamResult | ErroredWriteStreamResult;
+
+type SuccessfulWriteStreamResult = {
+  success: true;
+};
+
+type ErroredWriteStreamResult = {
+  success: false;
+  error: {
+    type: string;
+    detail: string;
+  };
+};
+
+export type StreamWriter = (streamId: string, events: Event[], options?: WriteOptions) => Promise<WriteStreamResult>;
+
 // TODO: maximum event batch size? or implicitly just handle it?
 export const writeStream = async (
   dynamoDB: DynamoDB,
   tableName: string,
   partitionSize: number,
   streamId: string,
-  events: Event[]
-): Promise<void> => {
+  events: Event[],
+  options?: WriteOptions
+): Promise<WriteStreamResult> => {
+  const expectedVersion: ExpectedVersion = options?.expectedVersion || 'any';
   const existingEvents = await readEvents(dynamoDB, tableName, streamId, {
     forward: false,
     limit: 1
   });
 
   const latestVersion = existingEvents.length > 0 ? existingEvents[0].version : -1;
-  const createdAt = new Date().toISOString();
 
+  if (expectedVersion === 'no_stream' && latestVersion >= 0) {
+    return {
+      success: false,
+      error: {
+        type: 'stream_version_mismatch',
+        detail: `Expected stream ${streamId} not to exist, but it does`
+      }
+    };
+  }
+
+  if (expectedVersion !== 'any' && expectedVersion !== 'no_stream' && latestVersion !== expectedVersion) {
+    return {
+      success: false,
+      error: {
+        type: 'stream_version_mismatch',
+        detail: `Expected stream ${streamId} to be at version ${expectedVersion}, but it was at version ${latestVersion}`
+      }
+    };
+  }
+
+  const createdAt = new Date().toISOString();
   const startEventPosition = await getNextEventPosition(dynamoDB, tableName, events.length);
 
   // TODO: Transactional write if more than one event probably
-  // TODO: Throw if version mismatch
-  // TODO: Expected stream versions, not exists, etc
   // TODO: Max number of items
   await dynamoDB.batchWriteItem({
     RequestItems: {
@@ -53,4 +92,8 @@ export const writeStream = async (
       })
     }
   });
+
+  return {
+    success: true
+  };
 };

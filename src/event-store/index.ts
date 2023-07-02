@@ -1,7 +1,7 @@
-import {DynamoDB} from "@aws-sdk/client-dynamodb";
-import {Event} from "./types";
-import {StreamWriter, writeStream} from "./stream-writer";
-import {StreamReader, readEvents} from "./stream-reader";
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
+import { Event } from './types';
+import { StreamWriter, WriteOptions, writeStream, WriteStreamResult } from './stream-writer';
+import { readEvents, StreamReader } from './stream-reader';
 
 export type EventStore = {
   streamReader: StreamReader;
@@ -11,7 +11,7 @@ export type EventStore = {
 export type EventStream = {
   id: string;
   version: number;
-  events: Event[]
+  events: Event[];
 };
 
 export type ConnectionOptions = {
@@ -31,7 +31,7 @@ export const connect = (options?: ConnectionOptions): EventStore => {
     streamReader: getStreamReader(dynamoDB, tableName),
     streamWriter: getStreamWriter(dynamoDB, tableName, partitionSize)
   };
-}
+};
 
 const getStreamReader = (dynamoDB: DynamoDB, tableName: string): StreamReader => {
   return async (streamId: string): Promise<EventStream> => {
@@ -48,11 +48,11 @@ const getStreamReader = (dynamoDB: DynamoDB, tableName: string): StreamReader =>
         metadata: event.metadata
       }))
     };
-  }
-}
+  };
+};
 
 const getStreamWriter = (dynamoDB: DynamoDB, tableName: string, partitionSize: number): StreamWriter => {
-  return async (streamId: string, events: Event[]): Promise<void> => {
-    await writeStream(dynamoDB, tableName, partitionSize, streamId, events);
-  }
-}
+  return async (streamId: string, events: Event[], options?: WriteOptions): Promise<WriteStreamResult> => {
+    return await writeStream(dynamoDB, tableName, partitionSize, streamId, events, options);
+  };
+};
