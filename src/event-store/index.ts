@@ -28,14 +28,14 @@ export const connect = (options?: ConnectionOptions): EventStore => {
   const partitionSize = options?.partitionSize || 1000;
 
   return {
-    streamReader: getStreamReader(dynamoDB, tableName),
+    streamReader: getStreamReader(dynamoDB, tableName, partitionSize),
     streamWriter: getStreamWriter(dynamoDB, tableName, partitionSize)
   };
 };
 
-const getStreamReader = (dynamoDB: DynamoDB, tableName: string): StreamReader => {
+const getStreamReader = (dynamoDB: DynamoDB, tableName: string, partitionSize: number): StreamReader => {
   return async (streamId: string): Promise<EventStream> => {
-    const events = await readEvents(dynamoDB, tableName, streamId);
+    const events = await readEvents(dynamoDB, tableName, partitionSize, streamId);
     const version = events.length > 0 ? events[events.length - 1].version : -1;
 
     return {
