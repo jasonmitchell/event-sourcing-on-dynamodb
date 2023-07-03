@@ -40,6 +40,25 @@ describe('Event Store', () => {
       await expectStreamMatches(streamId, events);
     });
 
+    it('cannot write to streams beginning with the reserved stream prefix ($)', async () => {
+      const streamId = `$reserved-${randomUUID()}`;
+      const events = randomEvents(3).map(event => ({
+        id: randomUUID(),
+        type: 'TestEvent',
+        data: event
+      }));
+
+      const result = await eventStore.streamWriter(streamId, events);
+
+      expect(result).toStrictEqual({
+        success: false,
+        error: {
+          type: 'invalid_stream_id',
+          detail: `Cannot write to stream ${streamId}, the prefix $ is reserved for internal streams`
+        }
+      });
+    });
+
     describe('stream versioning', () => {
       describe('no stream', () => {
         it('can write events when stream does not exist', async () => {

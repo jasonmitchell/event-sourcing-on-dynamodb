@@ -25,7 +25,6 @@ type ErroredWriteStreamResult = {
 
 export type StreamWriter = (streamId: string, events: Event[], options?: WriteOptions) => Promise<WriteStreamResult>;
 
-// TODO: maximum event batch size? or implicitly just handle it?
 export const writeStream = async (
   dynamoDB: DynamoDB,
   tableName: string,
@@ -41,6 +40,16 @@ export const writeStream = async (
   });
 
   const latestVersion = existingEvents.length > 0 ? existingEvents[0].version : -1;
+
+  if (streamId.startsWith('$')) {
+    return {
+      success: false,
+      error: {
+        type: 'invalid_stream_id',
+        detail: `Cannot write to stream ${streamId}, the prefix $ is reserved for internal streams`
+      }
+    };
+  }
 
   if (expectedVersion === 'no_stream' && latestVersion >= 0) {
     return {

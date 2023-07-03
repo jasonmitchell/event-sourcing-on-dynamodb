@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { createTable, randomEvents, randomMetadata } from './integration.sdk';
 
-xdescribe('Event Store', () => {
+describe('Event Store', () => {
   const dynamoDB = new DynamoDB({ region: 'eu-west-1', endpoint: 'http://localhost:8100' });
   let tableName = `event-log-${new Date().getTime()}`;
   let eventStore: EventStore;
