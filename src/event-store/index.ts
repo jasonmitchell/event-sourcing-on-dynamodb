@@ -19,6 +19,7 @@ export type ConnectionOptions = {
   tableName?: string;
   region?: string;
   partitionSize?: number;
+  readPageSize?: number;
 };
 
 export const connect = (options?: ConnectionOptions): EventStore => {
@@ -26,16 +27,17 @@ export const connect = (options?: ConnectionOptions): EventStore => {
   const tableName = options?.tableName || 'event-log';
   const dynamoDB = options?.client || new DynamoDB({ region: region });
   const partitionSize = options?.partitionSize || 1000;
+  const readPageSize = options?.readPageSize || 100;
 
   return {
-    streamReader: getStreamReader(dynamoDB, tableName, partitionSize),
+    streamReader: getStreamReader(dynamoDB, tableName, partitionSize, readPageSize),
     streamWriter: getStreamWriter(dynamoDB, tableName, partitionSize)
   };
 };
 
-const getStreamReader = (dynamoDB: DynamoDB, tableName: string, partitionSize: number): StreamReader => {
+const getStreamReader = (dynamoDB: DynamoDB, tableName: string, partitionSize: number, readPageSize: number): StreamReader => {
   return async (streamId: string, options?: ReadStreamOptions): Promise<EventStream> => {
-    const events = await readEvents(dynamoDB, tableName, partitionSize, streamId, options);
+    const events = await readEvents(dynamoDB, tableName, partitionSize, readPageSize, streamId, options);
     const version = events.length > 0 ? events[events.length - 1].version : -1;
 
     return {

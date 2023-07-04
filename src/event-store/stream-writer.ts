@@ -34,7 +34,7 @@ export const writeStream = async (
   options?: WriteOptions
 ): Promise<WriteStreamResult> => {
   const expectedVersion: ExpectedVersion = options?.expectedVersion || 'any';
-  const existingEvents = await readEvents(dynamoDB, tableName, partitionSize, streamId, {
+  const existingEvents = await readEvents(dynamoDB, tableName, partitionSize, 1, streamId, {
     forward: false,
     limit: 1
   });

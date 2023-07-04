@@ -9,6 +9,7 @@ export const readEvents = async (
   dynamoDB: DynamoDB,
   tableName: string,
   partitionSize: number,
+  readPageSize: number,
   streamId: string,
   options?: ReadStreamOptions
 ): Promise<EventRecord[]> => {

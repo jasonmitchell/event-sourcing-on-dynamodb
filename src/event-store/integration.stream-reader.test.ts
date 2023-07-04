@@ -14,7 +14,8 @@ describe('Event Store', () => {
     eventStore = connect({
       client: dynamoDB,
       tableName: tableName,
-      partitionSize: 10
+      partitionSize: 10,
+      readPageSize: 10
     });
 
     await createTable(dynamoDB, tableName);
