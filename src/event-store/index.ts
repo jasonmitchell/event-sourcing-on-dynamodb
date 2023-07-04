@@ -1,5 +1,5 @@
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
-import { Event } from './types';
+import { Event, ReadStreamOptions } from './types';
 import { StreamWriter, WriteOptions, writeStream, WriteStreamResult } from './stream-writer';
 import { readEvents, StreamReader } from './stream-reader';
 
@@ -34,8 +34,8 @@ export const connect = (options?: ConnectionOptions): EventStore => {
 };
 
 const getStreamReader = (dynamoDB: DynamoDB, tableName: string, partitionSize: number): StreamReader => {
-  return async (streamId: string): Promise<EventStream> => {
-    const events = await readEvents(dynamoDB, tableName, partitionSize, streamId);
+  return async (streamId: string, options?: ReadStreamOptions): Promise<EventStream> => {
+    const events = await readEvents(dynamoDB, tableName, partitionSize, streamId, options);
     const version = events.length > 0 ? events[events.length - 1].version : -1;
 
     return {

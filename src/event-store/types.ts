@@ -19,7 +19,8 @@ export type EventMetadata = {
   causationId?: string;
 };
 
-export type ReadEventsOptions = {
-  forward: boolean;
+export type ReadStreamOptions = {
+  forward?: boolean;
   limit?: number;
+  version?: number;
 };

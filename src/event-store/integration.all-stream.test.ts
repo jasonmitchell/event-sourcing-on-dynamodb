@@ -47,6 +47,30 @@ describe('Event Store', () => {
       expect(stream.events).toStrictEqual(eventsInOrder);
     });
 
+    it('reads events from a stream upto a specific position', async () => {
+      const numberOfEvents = 25;
+      const streams = [`all-version-test-${randomUUID()}`, `all-version-test-${randomUUID()}`];
+
+      const eventsInOrder = [];
+      for (let i = 0; i < numberOfEvents; i++) {
+        const stream = faker.helpers.arrayElement(streams);
+        const metadata = randomMetadata();
+        const event = {
+          id: randomUUID(),
+          type: 'TestEvent',
+          data: randomEvents(1)[0],
+          metadata: metadata
+        };
+
+        eventsInOrder.push(event);
+        await eventStore.streamWriter(stream, [event]);
+      }
+
+      const stream = await eventStore.streamReader('$all', { version: 14 });
+      expect(stream.version).toEqual(14);
+      expect(stream.events).toStrictEqual(eventsInOrder.splice(0, 15));
+    });
+
     describe('partitioning', () => {
       it('partitions events', async () => {
         const streamA = `event-position-${randomUUID()}`;

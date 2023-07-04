@@ -22,7 +22,7 @@ describe('Event Store', () => {
 
   describe('stream reader', () => {
     it('should read events from a stream', async () => {
-      const streamId = `integration-test-${randomUUID()}`;
+      const streamId = `read-stream-${randomUUID()}`;
       const metadata = randomMetadata();
       const events = randomEvents(3);
       const eventData = events.map(event => ({
@@ -37,14 +37,26 @@ describe('Event Store', () => {
       const stream = await eventStore.streamReader(streamId);
       expect(stream.id).toEqual(streamId);
       expect(stream.version).toEqual(2);
-      expect(stream.events).toEqual(
-        eventData.map(event => ({
-          id: event.id,
-          type: 'TestEvent',
-          data: event.data,
-          metadata: event.metadata
-        }))
-      );
+      expect(stream.events).toStrictEqual(eventData);
+    });
+
+    it('should read events from a stream upto a specific version', async () => {
+      const streamId = `read-stream-to-version-${randomUUID()}`;
+      const metadata = randomMetadata();
+      const events = randomEvents(10);
+      const eventData = events.map(event => ({
+        id: randomUUID(),
+        type: 'TestEvent',
+        data: event,
+        metadata: metadata
+      }));
+
+      await eventStore.streamWriter(streamId, eventData);
+
+      const stream = await eventStore.streamReader(streamId, { version: 5 });
+      expect(stream.id).toEqual(streamId);
+      expect(stream.version).toEqual(5);
+      expect(stream.events).toStrictEqual(eventData.splice(0, 6));
     });
   });
 });
