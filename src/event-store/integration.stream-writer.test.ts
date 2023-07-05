@@ -21,8 +21,8 @@ describe('Event Store', () => {
     await createTable(dynamoDB, tableName);
   });
 
-  describe('stream writer', () => {
-    it('should append events to a stream', async () => {
+  describe('streams writer', () => {
+    it('should append events to a streams', async () => {
       const streamId = `stream-writer-${randomUUID()}`;
       const metadata = randomMetadata();
       const events = randomEvents(3).map(event => ({
@@ -40,7 +40,7 @@ describe('Event Store', () => {
       await expectStreamMatches(streamId, events);
     });
 
-    it('cannot write to streams beginning with the reserved stream prefix ($)', async () => {
+    it('cannot write to streams beginning with the reserved streams prefix ($)', async () => {
       const streamId = `$reserved-${randomUUID()}`;
       const events = randomEvents(3).map(event => ({
         id: randomUUID(),
@@ -59,9 +59,9 @@ describe('Event Store', () => {
       });
     });
 
-    describe('stream versioning', () => {
-      describe('no stream', () => {
-        it('can write events when stream does not exist', async () => {
+    describe('streams versioning', () => {
+      describe('no streams', () => {
+        it('can write events when streams does not exist', async () => {
           const streamId = `stream-versioning-${randomUUID()}`;
           const events = randomEvents(3).map(event => ({
             id: randomUUID(),
@@ -80,8 +80,8 @@ describe('Event Store', () => {
           await expectStreamMatches(streamId, events);
         });
 
-        it('cannot write events when stream already exists', async () => {
-          const [streamId, _, seededEvents] = await seedStreamAtVersion('stream-versioning', 0);
+        it('cannot write events when streams already exists', async () => {
+          const [streamId, _, seededEvents] = await seedStreamAtVersion('streams-versioning', 0);
           const newEvents = randomEvents(3).map(event => ({
             id: randomUUID(),
             type: 'TestEvent',
@@ -105,7 +105,7 @@ describe('Event Store', () => {
       });
 
       describe('any version', () => {
-        it('can write events when stream does not exist', async () => {
+        it('can write events when streams does not exist', async () => {
           const streamId = `stream-versioning-${randomUUID()}`;
           const events = randomEvents(3).map(event => ({
             id: randomUUID(),
@@ -124,8 +124,8 @@ describe('Event Store', () => {
           await expectStreamMatches(streamId, [...events]);
         });
 
-        it('can write events when stream already exists', async () => {
-          const [streamId, _, seededEvents] = await seedStreamAtVersion('stream-versioning', 10);
+        it('can write events when streams already exists', async () => {
+          const [streamId, _, seededEvents] = await seedStreamAtVersion('streams-versioning', 10);
           const events = randomEvents(3).map(event => ({
             id: randomUUID(),
             type: 'TestEvent',
@@ -145,8 +145,8 @@ describe('Event Store', () => {
       });
 
       describe('specific version', () => {
-        it('can write events when stream is at expected version', async () => {
-          const [streamId, version, seededEvents] = await seedStreamAtVersion('stream-versioning', 10);
+        it('can write events when streams is at expected version', async () => {
+          const [streamId, version, seededEvents] = await seedStreamAtVersion('streams-versioning', 10);
           const events = randomEvents(3).map(event => ({
             id: randomUUID(),
             type: 'TestEvent',
@@ -164,8 +164,8 @@ describe('Event Store', () => {
           await expectStreamMatches(streamId, [...seededEvents, ...events]);
         });
 
-        it('cannot write events when stream is at newer version than expected', async () => {
-          const [streamId, version, seededEvents] = await seedStreamAtVersion('stream-versioning', 10);
+        it('cannot write events when streams is at newer version than expected', async () => {
+          const [streamId, version, seededEvents] = await seedStreamAtVersion('streams-versioning', 10);
           const events = randomEvents(3).map(event => ({
             id: randomUUID(),
             type: 'TestEvent',
@@ -188,8 +188,8 @@ describe('Event Store', () => {
           await expectStreamMatches(streamId, [...seededEvents]);
         });
 
-        it('cannot write events when stream is at older version than expected', async () => {
-          const [streamId, version, seededEvents] = await seedStreamAtVersion('stream-versioning', 10);
+        it('cannot write events when streams is at older version than expected', async () => {
+          const [streamId, version, seededEvents] = await seedStreamAtVersion('streams-versioning', 10);
           const events = randomEvents(3).map(event => ({
             id: randomUUID(),
             type: 'TestEvent',

@@ -21,7 +21,7 @@ describe('Event Store', () => {
     await createTable(dynamoDB, tableName);
   });
 
-  describe('all events stream', () => {
+  describe('all events streams', () => {
     it('reads events in order', async () => {
       const numberOfEvents = 25;
       const streams = [`all-test-${randomUUID()}`, `all-test-${randomUUID()}`];
@@ -47,7 +47,7 @@ describe('Event Store', () => {
       expect(stream.events).toStrictEqual(eventsInOrder);
     });
 
-    it('reads events from a stream upto a specific position', async () => {
+    it('reads events from a streams upto a specific position', async () => {
       const numberOfEvents = 25;
       const streams = [`all-version-test-${randomUUID()}`, `all-version-test-${randomUUID()}`];
 

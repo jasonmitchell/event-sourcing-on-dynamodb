@@ -1,27 +1,37 @@
 import { AttributeValue } from '@aws-sdk/client-dynamodb';
 import { getNumberOfPartitions } from '../event-position';
-import { EventData, EventMetadata, EventRecord, EventStoreOptions } from '../types';
+import { EventRecord, EventStoreOptions } from '../types';
+import { dynamoRecordToEvent } from './mapping';
 
 type ReadAllOptions = EventStoreOptions & {
   partitionSize: number;
   version?: number;
+  startFrom?: number;
 };
 
 export async function* readAll(options: ReadAllOptions): AsyncIterable<EventRecord> {
   yield* readPartitions(options);
 }
 
-async function* readPartitions(options: ReadAllOptions): AsyncIterable<EventRecord> {
+async function* readPartitions(options: ReadAllOptions, latestKnownPartition?: number): AsyncIterable<EventRecord> {
   const { dynamoDB, tableName, partitionSize } = options;
   const numberOfPartitions = await getNumberOfPartitions(dynamoDB, tableName, partitionSize);
 
-  for (let i = 0; i < numberOfPartitions; i++) {
+  if (numberOfPartitions === latestKnownPartition) {
+    return;
+  }
+
+  const startPartition = latestKnownPartition || 0;
+  for (let i = startPartition; i < numberOfPartitions; i++) {
     yield* readPartition(i, options);
   }
+
+  // Recursively read partitions to catch up to anything written while we were reading
+  yield* readPartitions(options, numberOfPartitions);
 }
 
 async function* readPartition(partition: number, options: ReadAllOptions): AsyncIterable<EventRecord> {
-  const { dynamoDB, tableName } = options;
+  const { dynamoDB, tableName, version, startFrom } = options;
 
   let lastEvaluatedKey: Record<string, AttributeValue> | undefined = undefined;
 
@@ -29,10 +39,11 @@ async function* readPartition(partition: number, options: ReadAllOptions): Async
     const result = await dynamoDB.query({
       TableName: tableName,
       IndexName: 'all_events',
-      KeyConditionExpression: 'event_partition = :partition AND event_position <= :version',
+      KeyConditionExpression: 'event_partition = :partition AND event_position BETWEEN :start_from AND :version',
       ExpressionAttributeValues: {
         ':partition': { S: `partition#${partition}` },
-        ':version': { N: String(options?.version ?? Number.MAX_SAFE_INTEGER) }
+        ':version': { N: String(version ?? Number.MAX_SAFE_INTEGER) },
+        ':start_from': { N: String(startFrom !== undefined ? startFrom + 1 : 0) }
       },
       ScanIndexForward: true
     });
@@ -48,14 +59,3 @@ async function* readPartition(partition: number, options: ReadAllOptions): Async
     lastEvaluatedKey = result.LastEvaluatedKey;
   } while (lastEvaluatedKey);
 }
-
-const dynamoRecordToEvent = (item: Record<string, AttributeValue>): EventRecord => ({
-  id: item.event_id.S!,
-  type: item.event_type.S!,
-  version: Number(item.sk.N!),
-  event_partition: item.event_partition.S!,
-  event_position: Number(item.event_position.N!),
-  created_at: item.created_at.S!,
-  data: JSON.parse(item.data.S!) as EventData,
-  metadata: JSON.parse(item.metadata.S!) as EventMetadata
-});

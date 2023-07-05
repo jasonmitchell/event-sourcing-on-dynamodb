@@ -21,8 +21,8 @@ describe('Event Store', () => {
     await createTable(dynamoDB, tableName);
   });
 
-  describe('stream reader', () => {
-    it('should read events from a stream', async () => {
+  describe('streams reader', () => {
+    it('should read events from a streams', async () => {
       const streamId = `read-stream-${randomUUID()}`;
       const metadata = randomMetadata();
       const events = randomEvents(3);
@@ -41,7 +41,7 @@ describe('Event Store', () => {
       expect(stream.events).toStrictEqual(eventData);
     });
 
-    it('should read events from a stream upto a specific version', async () => {
+    it('should read events from a streams upto a specific version', async () => {
       const streamId = `read-stream-to-version-${randomUUID()}`;
       const metadata = randomMetadata();
       const events = randomEvents(10);
