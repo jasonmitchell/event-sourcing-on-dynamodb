@@ -1,5 +1,6 @@
 import { connect, EventStore } from './index';
-import { Event } from './types';
+import { Event } from './streams/events';
+
 import { randomUUID } from 'crypto';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { createTable, dynamoRecordToEvent, randomEvents, randomMetadata } from './integration.sdk';

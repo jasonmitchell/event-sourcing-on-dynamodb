@@ -1,5 +1,6 @@
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
-import { Event, ReadStreamOptions } from './types';
+import { Event } from './streams/events';
+import { ReadStreamOptions } from './types';
 import { StreamWriter, WriteOptions, writeStream, WriteStreamResult } from './stream-writer';
 import { readEvents, StreamReader } from './stream-reader';
 

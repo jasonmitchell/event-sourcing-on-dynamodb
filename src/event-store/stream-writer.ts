@@ -1,5 +1,5 @@
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
-import { Event } from './types';
+import { Event, EventRecord } from './streams/events';
 import { readEvents } from './stream-reader';
 import { getNextEventPosition } from './event-position';
 
@@ -13,6 +13,7 @@ export type WriteStreamResult = SuccessfulWriteStreamResult | ErroredWriteStream
 
 type SuccessfulWriteStreamResult = {
   success: true;
+  records: EventRecord[];
 };
 
 type ErroredWriteStreamResult = {
@@ -73,6 +74,7 @@ export const writeStream = async (
 
   const createdAt = new Date().toISOString();
   const startEventPosition = await getNextEventPosition(dynamoDB, tableName, events.length);
+  const records: EventRecord[] = [];
 
   // TODO: Transactional write if more than one event probably
   // TODO: Max number of items
@@ -83,18 +85,29 @@ export const writeStream = async (
         const eventPosition = startEventPosition + index;
         const eventPartition = Math.floor(eventPosition / partitionSize);
 
+        const record: EventRecord = {
+          ...event,
+          metadata: event.metadata || {},
+          version,
+          created_at: createdAt,
+          event_partition: `partition#${eventPartition}`,
+          event_position: eventPosition
+        };
+
+        records.push(record);
+
         return {
           PutRequest: {
             Item: {
               pk: { S: streamId },
-              sk: { N: version.toString() },
-              event_partition: { S: `partition#${eventPartition}` },
-              event_position: { N: eventPosition.toString() },
-              event_id: { S: event.id },
-              event_type: { S: event.type },
-              created_at: { S: createdAt },
-              data: { S: JSON.stringify(event.data) },
-              metadata: { S: JSON.stringify(event.metadata || {}) }
+              sk: { N: record.version.toString() },
+              event_partition: { S: record.event_partition },
+              event_position: { N: record.event_position.toString() },
+              event_id: { S: record.id },
+              event_type: { S: record.type },
+              created_at: { S: record.created_at },
+              data: { S: JSON.stringify(record.data) },
+              metadata: { S: JSON.stringify(record.metadata) }
             }
           }
         };
@@ -103,6 +116,7 @@ export const writeStream = async (
   });
 
   return {
-    success: true
+    success: true,
+    records: records
   };
 };

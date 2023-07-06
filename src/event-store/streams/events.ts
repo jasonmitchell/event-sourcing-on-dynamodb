@@ -1,5 +1,25 @@
 import { AttributeValue } from '@aws-sdk/client-dynamodb';
-import { EventData, EventMetadata, EventRecord } from '../types';
+
+export type Event = {
+  id: string;
+  type: string;
+  data: EventData;
+  metadata?: EventMetadata;
+};
+
+export type EventRecord = Event & {
+  version: number;
+  created_at: string;
+  event_partition: string;
+  event_position: number;
+};
+
+export type EventData = object;
+
+export type EventMetadata = {
+  correlationId?: string;
+  causationId?: string;
+};
 
 export const dynamoRecordToEvent = (item: Record<string, AttributeValue>): EventRecord => ({
   id: item.event_id.S!,

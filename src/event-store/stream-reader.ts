@@ -1,5 +1,6 @@
 import { AttributeValue, DynamoDB } from '@aws-sdk/client-dynamodb';
-import { EventData, EventMetadata, EventRecord, ReadStreamOptions } from './types';
+import { EventData, EventMetadata, EventRecord } from './streams/events';
+import { ReadStreamOptions } from './types';
 import { EventStream } from './index';
 import { getNumberOfPartitions } from './event-position';
 
