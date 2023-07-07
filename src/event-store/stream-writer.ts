@@ -87,6 +87,7 @@ export const writeStream = async (
 
         const record: EventRecord = {
           ...event,
+          stream_id: streamId,
           metadata: event.metadata || {},
           version,
           created_at: createdAt,

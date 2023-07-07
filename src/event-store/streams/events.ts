@@ -8,6 +8,7 @@ export type Event = {
 };
 
 export type EventRecord = Event & {
+  stream_id: string;
   version: number;
   created_at: string;
   event_partition: string;
@@ -22,6 +23,7 @@ export type EventMetadata = {
 };
 
 export const dynamoRecordToEvent = (item: Record<string, AttributeValue>): EventRecord => ({
+  stream_id: item.pk.S!,
   id: item.event_id.S!,
   type: item.event_type.S!,
   version: Number(item.sk.N!),

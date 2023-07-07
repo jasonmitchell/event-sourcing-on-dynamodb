@@ -37,6 +37,13 @@ describe('Event Store', () => {
         expect(retrievedEvents.map(e => e.version)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
       });
 
+      it('limits events returned', async () => {
+        const [streamId] = await writeEventsToStream(10);
+        const retrievedEvents = await readEventsFromStream(streamId, { limit: 2 });
+
+        expect(retrievedEvents.map(e => e.version)).toEqual([0, 1]);
+      });
+
       it('reads stream up to specific version', async () => {
         const [streamId] = await writeEventsToStream(10);
         const retrievedEvents = await readEventsFromStream(streamId, { endVersion: 6 });
@@ -58,6 +65,13 @@ describe('Event Store', () => {
         const retrievedEvents = await readEventsFromStream(streamId, { direction: 'backward' });
 
         expect(retrievedEvents.map(e => e.version)).toEqual([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]);
+      });
+
+      it('limits events returned', async () => {
+        const [streamId] = await writeEventsToStream(10);
+        const retrievedEvents = await readEventsFromStream(streamId, { limit: 2, direction: 'backward' });
+
+        expect(retrievedEvents.map(e => e.version)).toEqual([9, 8]);
       });
 
       it('reads stream up to specific version', async () => {
@@ -93,6 +107,7 @@ describe('Event Store', () => {
     options?: {
       startVersion?: number;
       endVersion?: number;
+      limit?: number;
       direction?: 'forward' | 'backward';
     }
   ): Promise<EventRecord[]> => {
@@ -101,6 +116,7 @@ describe('Event Store', () => {
       tableName,
       startVersion: options?.startVersion,
       endVersion: options?.endVersion,
+      limit: options?.limit,
       direction: options?.direction
     };
 
