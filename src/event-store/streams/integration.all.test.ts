@@ -1,9 +1,9 @@
 import { connect, EventStore } from '../index';
 import { randomUUID } from 'crypto';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
-import { createTable, randomEvents, randomMetadata } from '../integration.sdk';
 import { readAll, ReadAllOptions } from './all';
 import { EventRecord } from './events';
+import { createTable, randomEvents, randomMetadata } from './integration.sdk';
 
 describe('Event Store', () => {
   const dynamoDB = new DynamoDB({ region: 'eu-west-1', endpoint: 'http://localhost:8100' });
@@ -106,7 +106,7 @@ describe('Event Store', () => {
       const event = {
         id: i.toString(),
         type: 'TestEvent',
-        data: randomEvents(1)[0],
+        data: randomEvents(1)[0].data,
         metadata: randomMetadata()
       };
 
@@ -121,16 +121,16 @@ describe('Event Store', () => {
   };
 
   const readAllEvents = async (options?: {
-    endPosition?: number;
     startPosition?: number;
+    endPosition?: number;
     direction?: 'forward' | 'backward';
   }): Promise<EventRecord[]> => {
     const readAllOptions: ReadAllOptions = {
       dynamoDB,
       tableName,
       partitionSize: 10,
-      endPosition: options?.endPosition,
       startPosition: options?.startPosition,
+      endPosition: options?.endPosition,
       direction: options?.direction
     };
 

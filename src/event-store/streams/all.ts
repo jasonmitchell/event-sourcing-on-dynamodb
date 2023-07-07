@@ -7,8 +7,8 @@ type ReadDirection = 'forward' | 'backward';
 
 export type ReadAllOptions = EventStoreOptions & {
   partitionSize: number;
-  endPosition?: number;
   startPosition?: number;
+  endPosition?: number;
   direction?: ReadDirection;
 };
 
