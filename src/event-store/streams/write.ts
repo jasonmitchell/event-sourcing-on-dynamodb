@@ -1,8 +1,8 @@
 import { EventStoreOptions } from '../types';
 import { Event, EventRecord } from './events';
 import { readStream, ReadStreamOptions } from './read';
-import { getNextEventPosition } from '../event-position';
-import { AttributeValue } from '@aws-sdk/client-dynamodb/dist-types/models/models_0';
+import { AttributeValue } from '@aws-sdk/client-dynamodb';
+import { getNextEventPosition } from './write-partitioning';
 
 export type ExpectedVersion = 'any' | 'no_stream' | number;
 
@@ -111,9 +111,9 @@ const getEventRecords = async (
   streamVersion: number,
   options: WriteStreamOptions
 ): Promise<EventRecord[]> => {
-  const { dynamoDB, tableName, partitionSize } = options;
+  const { partitionSize } = options;
   const createdAt = new Date().toISOString();
-  const startEventPosition = await getNextEventPosition(dynamoDB, tableName, events.length);
+  const startEventPosition = await getNextEventPosition(events.length, options);
 
   return events.map((event, index) => {
     const version = streamVersion + index + 1;

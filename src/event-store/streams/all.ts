@@ -1,7 +1,7 @@
 import { AttributeValue, DynamoDB, QueryCommandOutput } from '@aws-sdk/client-dynamodb';
-import { getNumberOfPartitions } from '../event-position';
 import { dynamoRecordToEvent, EventRecord } from './events';
 import { ReadOptions } from './read';
+import { getNumberOfPartitions } from './write-partitioning';
 
 export type ReadAllOptions = ReadOptions & {
   partitionSize: number;
@@ -24,7 +24,7 @@ export async function* readAll(options: ReadAllOptions): AsyncIterable<EventReco
 async function* readPartitions(options: ReadAllOptions, latestKnownPartition?: number): AsyncIterable<EventRecord> {
   const { dynamoDB, tableName, partitionSize, direction } = options;
   const readForward = direction !== 'backward';
-  const numberOfPartitions = await getNumberOfPartitions(dynamoDB, tableName, partitionSize);
+  const numberOfPartitions = await getNumberOfPartitions(partitionSize, options);
 
   if (numberOfPartitions === latestKnownPartition) {
     return;
