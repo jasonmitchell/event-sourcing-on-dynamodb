@@ -1,15 +1,12 @@
 import { AttributeValue, DynamoDB, QueryCommandOutput } from '@aws-sdk/client-dynamodb';
 import { getNumberOfPartitions } from '../event-position';
 import { dynamoRecordToEvent, EventRecord } from './events';
-import { EventStoreOptions } from '../types';
+import { ReadOptions } from './read';
 
-type ReadDirection = 'forward' | 'backward';
-
-export type ReadAllOptions = EventStoreOptions & {
+export type ReadAllOptions = ReadOptions & {
   partitionSize: number;
   startPosition?: number;
   endPosition?: number;
-  direction?: ReadDirection;
 };
 
 type QueryOptions = {

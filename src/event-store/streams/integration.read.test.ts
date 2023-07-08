@@ -2,7 +2,7 @@ import { connect, EventStore } from '../index';
 import { randomUUID } from 'crypto';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { EventRecord } from './events';
-import { readStream, ReadStreamOptions } from './read';
+import { ReadDirection, readStream, ReadStreamOptions } from './read';
 import { createTable, randomEvents } from './integration.sdk';
 
 describe('Event Store', () => {
@@ -108,7 +108,7 @@ describe('Event Store', () => {
       startVersion?: number;
       endVersion?: number;
       limit?: number;
-      direction?: 'forward' | 'backward';
+      direction?: ReadDirection;
     }
   ): Promise<EventRecord[]> => {
     const readStreamOptions: ReadStreamOptions = {

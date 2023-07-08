@@ -4,6 +4,7 @@ import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { readAll, ReadAllOptions } from './all';
 import { EventRecord } from './events';
 import { createTable, randomEvents, randomMetadata } from './integration.sdk';
+import { ReadDirection } from './read';
 
 describe('Event Store', () => {
   const dynamoDB = new DynamoDB({ region: 'eu-west-1', endpoint: 'http://localhost:8100' });
@@ -123,7 +124,7 @@ describe('Event Store', () => {
   const readAllEvents = async (options?: {
     startPosition?: number;
     endPosition?: number;
-    direction?: 'forward' | 'backward';
+    direction?: ReadDirection;
   }): Promise<EventRecord[]> => {
     const readAllOptions: ReadAllOptions = {
       dynamoDB,

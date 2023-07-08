@@ -2,13 +2,16 @@ import { dynamoRecordToEvent, EventRecord } from './events';
 import { EventStoreOptions } from '../types';
 import { AttributeValue, DynamoDB, QueryCommandOutput } from '@aws-sdk/client-dynamodb';
 
-type ReadDirection = 'forward' | 'backward';
+export type ReadDirection = 'forward' | 'backward';
 
-export type ReadStreamOptions = EventStoreOptions & {
+export type ReadOptions = EventStoreOptions & {
+  direction?: ReadDirection;
+};
+
+export type ReadStreamOptions = ReadOptions & {
   startVersion?: number;
   endVersion?: number;
   limit?: number;
-  direction?: ReadDirection;
 };
 
 type QueryOptions = {
