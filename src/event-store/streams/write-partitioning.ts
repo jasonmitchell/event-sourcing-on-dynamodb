@@ -1,4 +1,4 @@
-import { EventStoreOptions } from '../types';
+import { EventStoreOptions } from '../index';
 
 export const getNumberOfPartitions = async (partitionSize: number, options: EventStoreOptions): Promise<number> => {
   const { dynamoDB, tableName } = options;

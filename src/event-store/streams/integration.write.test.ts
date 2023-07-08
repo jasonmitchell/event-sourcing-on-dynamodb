@@ -1,4 +1,3 @@
-import { connect, EventStore } from '../index';
 import { randomUUID } from 'crypto';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { EventRecord } from './events';
@@ -8,18 +7,12 @@ import { writeStream } from './write';
 
 describe('Event Store', () => {
   const dynamoDB = new DynamoDB({ region: 'eu-west-1', endpoint: 'http://localhost:8100' });
-  let tableName = `test-${new Date().getTime()}`;
-  let eventStore: EventStore;
+  let tableName = '';
   let defaultOptions = { partitionSize: 10, dynamoDB, tableName };
 
   beforeEach(async () => {
     tableName = `test-${new Date().getTime()}`;
     defaultOptions = { partitionSize: 10, dynamoDB, tableName };
-
-    eventStore = connect({
-      client: dynamoDB,
-      tableName: tableName
-    });
 
     await createTable(dynamoDB, tableName);
   });

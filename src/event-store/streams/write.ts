@@ -1,8 +1,8 @@
-import { EventStoreOptions } from '../types';
 import { Event, EventRecord } from './events';
 import { readStream, ReadStreamOptions } from './read';
 import { AttributeValue } from '@aws-sdk/client-dynamodb';
 import { getNextEventPosition } from './write-partitioning';
+import { EventStoreOptions } from '../index';
 
 export type ExpectedVersion = 'any' | 'no_stream' | number;
 

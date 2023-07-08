@@ -1,25 +1,17 @@
-import { connect, EventStore } from '../index';
 import { randomUUID } from 'crypto';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { readAll, ReadAllOptions } from './all';
 import { EventRecord } from './events';
 import { createTable, randomEvents, randomMetadata } from './integration.sdk';
 import { ReadDirection } from './read';
+import { writeStream } from './write';
 
 describe('Event Store', () => {
   const dynamoDB = new DynamoDB({ region: 'eu-west-1', endpoint: 'http://localhost:8100' });
-  let tableName = `event-log-${new Date().getTime()}`;
-  let eventStore: EventStore;
+  let tableName = '';
 
   beforeEach(async () => {
     tableName = `test-${new Date().getTime()}`;
-
-    eventStore = connect({
-      client: dynamoDB,
-      tableName: tableName,
-      partitionSize: 10
-    });
-
     await createTable(dynamoDB, tableName);
   });
 
@@ -112,7 +104,7 @@ describe('Event Store', () => {
       };
 
       const streamToWrite = i % 2 === 0 ? streamA : streamB;
-      const result = await eventStore.streamWriter(streamToWrite, [event]);
+      const result = await writeStream(streamToWrite, [event], { dynamoDB, tableName, partitionSize: 10 });
       if (result.success) {
         eventsInOrder.push(...result.records);
       }
