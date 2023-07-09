@@ -30,6 +30,21 @@ describe('Event Store', () => {
       }
     });
 
+    it('writes to stream multiple times', async () => {
+      const streamId = `write-stream-${randomUUID()}`;
+      const allEvents: EventRecord[] = [];
+
+      for (let i = 0; i < 3; i++) {
+        const events = randomEvents(1);
+        const result = await writeStream(streamId, events, defaultOptions);
+        if (result.success) {
+          allEvents.push(...result.records);
+        }
+      }
+
+      expect(allEvents).toHaveLength(3);
+    });
+
     it('appends events to stream', async () => {
       const streamId = `write-stream-${randomUUID()}`;
       const events = randomEvents(3);

@@ -22,7 +22,7 @@ export async function* readAll(options: ReadAllOptions): AsyncIterable<EventReco
 }
 
 async function* readPartitions(options: ReadAllOptions, latestKnownPartition?: number): AsyncIterable<EventRecord> {
-  const { dynamoDB, tableName, partitionSize, direction } = options;
+  const { partitionSize, direction } = options;
   const readForward = direction !== 'backward';
   const numberOfPartitions = await getNumberOfPartitions(partitionSize, options);
 

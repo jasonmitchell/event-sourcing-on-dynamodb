@@ -102,7 +102,8 @@ const getStreamVersion = async (streamId: string, options: EventStoreOptions): P
 
   const streamReader = await readStream(streamId, readStreamOptions);
   const lastEvent = await streamReader[Symbol.asyncIterator]().next();
-  return lastEvent?.value?.version || -1;
+
+  return lastEvent?.value?.version !== undefined ? lastEvent.value.version : -1;
 };
 
 const getEventRecords = async (
