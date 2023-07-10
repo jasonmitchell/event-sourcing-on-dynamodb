@@ -4,6 +4,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { withSecureParameter } from './infra/aws/parameter-store';
 import { layerFromNodeModules, nodeFunction } from './infra/aws/lambda';
 import { withReadDynamo, withReadSecureParameter, withWriteDynamo } from './infra/aws/iam/policy';
+import { lambdaRole } from './infra/aws/iam/role';
 
 const apiKey = pulumi.secret(process.env.API_KEY as string);
 
@@ -28,6 +29,35 @@ const table = new aws.dynamodb.Table('events', {
       projectionType: 'ALL'
     }
   ]
+});
+
+const eventStream = new aws.kinesis.Stream('events-stream', {
+  streamModeDetails: {
+    streamMode: 'ON_DEMAND'
+  },
+  retentionPeriod: 24
+});
+
+new aws.dynamodb.KinesisStreamingDestination('dynamo-kinesis-events-stream', {
+  streamArn: eventStream.arn,
+  tableName: table.name
+});
+
+const eventProcessorRole = lambdaRole('event-processor-role', {
+  managedPolicyArns: [aws.iam.ManagedPolicies.AWSLambdaKinesisExecutionRole]
+});
+
+const eventProcessor = nodeFunction(`process-events`, {
+  indexPath: './dist/api/processing/index.js',
+  timeout: 120,
+  memorySize: 256,
+  roleArn: eventProcessorRole.arn
+});
+
+new aws.lambda.EventSourceMapping('event-stream-processor-mapping', {
+  eventSourceArn: eventStream.arn,
+  functionName: eventProcessor.arn,
+  startingPosition: 'LATEST'
 });
 
 const awsSdkLayer = layerFromNodeModules('node-aws-sdk', './infra/layers/aws-sdk/node_modules/');
