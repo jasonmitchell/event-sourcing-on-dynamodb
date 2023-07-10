@@ -2,8 +2,8 @@ import * as aws from '@pulumi/aws';
 import * as awsx from '@pulumi/awsx';
 import * as pulumi from '@pulumi/pulumi';
 import { withSecureParameter } from './infra/aws/parameter-store';
-import { nodeFunction, layerFromNodeModules } from './infra/aws/lambda';
-import {withReadDynamo, withWriteDynamo, withReadSecureParameter} from './infra/aws/iam/policy';
+import { layerFromNodeModules, nodeFunction } from './infra/aws/lambda';
+import { withReadDynamo, withReadSecureParameter, withWriteDynamo } from './infra/aws/iam/policy';
 
 const apiKey = pulumi.secret(process.env.API_KEY as string);
 
@@ -11,12 +11,22 @@ withSecureParameter('event-sourcing-api-key', apiKey, 'The API key used to authe
 
 const table = new aws.dynamodb.Table('events', {
   name: 'event-log',
-  hashKey: 'stream_id',
-  rangeKey: 'version',
+  hashKey: 'pk',
+  rangeKey: 'sk',
   billingMode: 'PAY_PER_REQUEST',
   attributes: [
-    { name: 'stream_id', type: 'S' },
-    { name: 'version', type: 'N' },
+    { name: 'pk', type: 'S' },
+    { name: 'sk', type: 'N' },
+    { name: 'event_partition', type: 'S' },
+    { name: 'event_position', type: 'N' }
+  ],
+  globalSecondaryIndexes: [
+    {
+      name: 'all_events',
+      hashKey: 'event_partition',
+      rangeKey: 'event_position',
+      projectionType: 'ALL'
+    }
   ]
 });
 
@@ -36,11 +46,23 @@ const tokenLambdaAuthorizer = awsx.classic.apigateway.getTokenLambdaAuthorizer({
 const gateway = new awsx.classic.apigateway.API('event-sourcing-api', {
   routes: [
     {
-      path: '/test/{id}',
+      path: '/streams/{streamId}',
       method: 'PUT',
-      eventHandler: nodeFunction(`api-test`, {
-        indexPath: './dist/api/test/index.js',
+      eventHandler: nodeFunction(`api-append-events`, {
+        indexPath: './dist/api/streams/append/index.js',
         policyStatements: [withReadDynamo(), withWriteDynamo()],
+        timeout: 29,
+        memorySize: 256,
+        layers: [awsSdkLayer.arn]
+      }),
+      authorizers: tokenLambdaAuthorizer
+    },
+    {
+      path: '/streams/{streamId}',
+      method: 'GET',
+      eventHandler: nodeFunction(`api-read-events`, {
+        indexPath: './dist/api/streams/read/index.js',
+        policyStatements: [withReadDynamo()],
         timeout: 29,
         memorySize: 256,
         layers: [awsSdkLayer.arn]
