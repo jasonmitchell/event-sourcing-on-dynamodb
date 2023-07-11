@@ -3,6 +3,8 @@ import * as path from 'path';
 import * as esbuild from 'esbuild';
 import { fileURLToPath } from 'url';
 
+const buildDirectories = process.argv.slice(2);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -14,7 +16,7 @@ const findEntryPointsInDirectory = (dir, entryPointFileName) => {
     if (entry.isDirectory()) {
       const entryPointsUnderDir = findEntryPointsInDirectory(`${dir}/${entry.name}`, entryPointFileName);
       entryPoints.push(...entryPointsUnderDir);
-    } else if (entry.name == entryPointFileName) {
+    } else if (entry.name === entryPointFileName) {
       entryPoints.push(`${dir}/${entry.name}`);
     }
   });
@@ -22,17 +24,24 @@ const findEntryPointsInDirectory = (dir, entryPointFileName) => {
   return entryPoints;
 };
 
-const rootDir = path.join(__dirname, '../src/api');
-const entryPoints = findEntryPointsInDirectory(rootDir, 'index.ts');
+for (const dir of buildDirectories) {
+  const rootDir = path.join(__dirname, `../src/${dir}`);
+  const entryPoints = findEntryPointsInDirectory(rootDir, 'index.ts');
 
-await esbuild.build({
-  entryPoints,
-  minify: false,
-  bundle: true,
-  treeShaking: true,
-  sourcemap: false,
-  external: ['@aws-sdk/client-dynamodb'],
-  outdir: path.join(__dirname, '../dist/api'),
-  outbase: rootDir,
-  platform: 'node'
-});
+  const result = await esbuild.build({
+    entryPoints,
+    minify: false,
+    bundle: true,
+    treeShaking: true,
+    sourcemap: false,
+    external: ['@aws-sdk/*'],
+    outdir: path.join(__dirname, `../dist/${dir}`),
+    outbase: rootDir,
+    platform: 'node'
+  });
+
+  if (result.errors.length > 0) {
+    console.error(result.errors);
+    process.exit(1);
+  }
+}

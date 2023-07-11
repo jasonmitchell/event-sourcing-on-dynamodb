@@ -1,5 +1,3 @@
-import { AttributeValue } from '@aws-sdk/client-dynamodb';
-
 export type Event = {
   id: string;
   type: string;
@@ -22,7 +20,7 @@ export type EventMetadata = {
   causationId?: string;
 };
 
-export const dynamoRecordToEvent = (item: Record<string, AttributeValue>): EventRecord => ({
+export const dynamoRecordToEvent = (item: any): EventRecord => ({
   stream_id: item.pk.S!,
   id: item.event_id.S!,
   type: item.event_type.S!,

@@ -2,7 +2,7 @@
 
 rm -rf dist
 
-node ./scripts/build-api.mjs
+node ./scripts/build.mjs api backend
 if [ $? -ne 0 ]; then
   echo "Build failed"
   exit 1

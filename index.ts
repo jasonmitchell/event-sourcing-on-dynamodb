@@ -7,13 +7,16 @@ import { withReadDynamo, withReadSecureParameter, withWriteDynamo } from './infr
 import { lambdaRole } from './infra/aws/iam/role';
 
 const apiKey = pulumi.secret(process.env.API_KEY as string);
-
 withSecureParameter('event-sourcing-api-key', apiKey, 'The API key used to authenticate with the API during early development');
+
+const awsSdkLayer = layerFromNodeModules('node-aws-sdk', './infra/layers/aws-sdk/node_modules/');
 
 const table = new aws.dynamodb.Table('events', {
   name: 'event-log',
   hashKey: 'pk',
   rangeKey: 'sk',
+  streamEnabled: true,
+  streamViewType: 'NEW_IMAGE',
   billingMode: 'PAY_PER_REQUEST',
   attributes: [
     { name: 'pk', type: 'S' },
@@ -31,36 +34,48 @@ const table = new aws.dynamodb.Table('events', {
   ]
 });
 
-const eventStream = new aws.kinesis.Stream('events-stream', {
-  streamModeDetails: {
-    streamMode: 'ON_DEMAND'
-  },
-  retentionPeriod: 24
+// TODO: Tidy up eventbridge stuff
+const eventTranslatorRole = lambdaRole('event-translator-role', {
+  managedPolicyArns: [aws.iam.ManagedPolicies.AWSLambdaDynamoDBExecutionRole, aws.iam.ManagedPolicies.CloudWatchEventsFullAccess]
 });
 
-new aws.dynamodb.KinesisStreamingDestination('dynamo-kinesis-events-stream', {
-  streamArn: eventStream.arn,
-  tableName: table.name
-});
-
-const eventProcessorRole = lambdaRole('event-processor-role', {
-  managedPolicyArns: [aws.iam.ManagedPolicies.AWSLambdaKinesisExecutionRole]
-});
-
-const eventProcessor = nodeFunction(`process-events`, {
-  indexPath: './dist/api/processing/index.js',
+const eventTranslator = nodeFunction(`api-event-translator`, {
+  indexPath: './dist/api/event-translator/index.js',
   timeout: 120,
   memorySize: 256,
-  roleArn: eventProcessorRole.arn
+  roleArn: eventTranslatorRole.arn,
+  layers: [awsSdkLayer.arn]
 });
 
-new aws.lambda.EventSourceMapping('event-stream-processor-mapping', {
-  eventSourceArn: eventStream.arn,
-  functionName: eventProcessor.arn,
+new aws.lambda.EventSourceMapping('event-translator-mapping', {
+  eventSourceArn: table.streamArn,
+  functionName: eventTranslator.arn,
   startingPosition: 'LATEST'
 });
 
-const awsSdkLayer = layerFromNodeModules('node-aws-sdk', './infra/layers/aws-sdk/node_modules/');
+const eventRule = new aws.cloudwatch.EventRule('api-event-publish-rule', {
+  eventPattern: JSON.stringify({
+    source: ['demo-streams-api']
+  })
+});
+
+const eventLogger = nodeFunction(`backend-event-logger`, {
+  indexPath: './dist/backend/event-logger/index.js',
+  timeout: 120,
+  memorySize: 256
+});
+
+new aws.cloudwatch.EventTarget('event-logger-target', {
+  arn: eventLogger.arn,
+  rule: eventRule.name
+});
+
+new aws.lambda.Permission('event-logger-target-permission', {
+  action: 'lambda:InvokeFunction',
+  function: eventLogger.arn,
+  principal: 'events.amazonaws.com',
+  sourceArn: eventRule.arn
+});
 
 const tokenLambdaAuthorizer = awsx.classic.apigateway.getTokenLambdaAuthorizer({
   authorizerName: 'api-key-authorizer',

@@ -1,6 +1,7 @@
 {
   "name": "layer-aws-sdk",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.359.0"
+    "@aws-sdk/client-dynamodb": "^3.369.0",
+    "@aws-sdk/client-eventbridge": "^3.369.0"
   }
 }
