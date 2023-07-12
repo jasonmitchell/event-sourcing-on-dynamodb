@@ -6,8 +6,6 @@ const eventBridgeClient = new EventBridgeClient({ region: 'eu-west-1' });
 
 // TODO: Maybe replace this whole thing with an eventbridge pipe?
 export const handler = async (streamEvent: DynamoDBStreamEvent): Promise<void> => {
-  console.debug('Received event from dynamodb stream:', JSON.stringify(streamEvent, null, 2));
-
   const events = streamEvent.Records.filter(e => e.dynamodb).map(e => {
     const record = e.dynamodb!;
     const event = dynamoRecordToEvent(record.NewImage!);
@@ -34,5 +32,11 @@ export const handler = async (streamEvent: DynamoDBStreamEvent): Promise<void> =
     })
   );
 
-  console.log(result);
+  if (result.FailedEntryCount! < events.length) {
+    console.log(`Successfully published ${events.length - result.FailedEntryCount!} event(s) to eventbridge`);
+  }
+
+  if (result.FailedEntryCount! > 0) {
+    console.error(`Failed to publish ${result.FailedEntryCount!} event(s) to eventbridge`);
+  }
 };
