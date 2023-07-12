@@ -50,7 +50,22 @@ const eventTranslator = nodeFunction(`api-event-translator`, {
 new aws.lambda.EventSourceMapping('event-translator-mapping', {
   eventSourceArn: table.streamArn,
   functionName: eventTranslator.arn,
-  startingPosition: 'LATEST'
+  startingPosition: 'LATEST',
+  filterCriteria: {
+    filters: [
+      {
+        pattern: JSON.stringify({
+          dynamodb: {
+            Keys: {
+              pk: {
+                S: [{ 'anything-but': [{ prefix: '$' }] }]
+              }
+            }
+          }
+        })
+      }
+    ]
+  }
 });
 
 const eventRule = new aws.cloudwatch.EventRule('api-event-publish-rule', {

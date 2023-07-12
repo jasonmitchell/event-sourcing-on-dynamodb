@@ -6,8 +6,9 @@ const eventBridgeClient = new EventBridgeClient({ region: 'eu-west-1' });
 
 // TODO: Maybe replace this whole thing with an eventbridge pipe?
 export const handler = async (streamEvent: DynamoDBStreamEvent): Promise<void> => {
-  // TODO: Filter out non-inserts because we don't care (because event sourcing...)
-  const events = streamEvent.Records.filter(e => e.eventName == 'INSERT' && e.dynamodb).map(e => {
+  console.debug('Received event from dynamodb stream:', JSON.stringify(streamEvent, null, 2));
+
+  const events = streamEvent.Records.filter(e => e.dynamodb).map(e => {
     const record = e.dynamodb!;
     const event = dynamoRecordToEvent(record.NewImage!);
 
