@@ -4,7 +4,6 @@ import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge
 
 const eventBridgeClient = new EventBridgeClient({ region: 'eu-west-1' });
 
-// TODO: Maybe replace this whole thing with an eventbridge pipe?
 export const handler = async (streamEvent: DynamoDBStreamEvent): Promise<void> => {
   const events = streamEvent.Records.filter(e => e.dynamodb).map(e => {
     const record = e.dynamodb!;
