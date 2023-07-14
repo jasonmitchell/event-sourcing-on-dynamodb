@@ -17,12 +17,11 @@
         "typescript": "^5.1.3"
     },
     "dependencies": {
-        "@aws-sdk/client-dynamodb": "^3.369.0",
-        "@aws-sdk/client-eventbridge": "^3.369.0",
+        "@aws-sdk/client-dynamodb": "^3.370.0",
+        "@aws-sdk/client-eventbridge": "^3.370.0",
         "@pulumi/aws": "^5.42.0",
-        "@pulumi/aws-apigateway": "^1.0.1",
         "@pulumi/awsx": "^1.0.2",
-        "@pulumi/pulumi": "^3.74.0",
+        "@pulumi/pulumi": "^3.75.0",
         "aws-lambda": "^1.0.7"
     }
 }
