@@ -55,13 +55,7 @@ new aws.lambda.EventSourceMapping('event-translator-mapping', {
     filters: [
       {
         pattern: JSON.stringify({
-          dynamodb: {
-            Keys: {
-              pk: {
-                S: [{ 'anything-but': [{ prefix: '$' }] }]
-              }
-            }
-          }
+          eventName: ['INSERT']
         })
       }
     ]
