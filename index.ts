@@ -40,7 +40,7 @@ const eventTranslatorRole = lambdaRole('event-translator-role', {
 });
 
 const eventTranslator = nodeFunction(`api-event-translator`, {
-  indexPath: './dist/api/event-translator/index.js',
+  handlerPath: './dist/api/event-translator/index.js',
   timeout: 120,
   memorySize: 256,
   roleArn: eventTranslatorRole.arn,
@@ -75,7 +75,7 @@ const eventRule = new aws.cloudwatch.EventRule('api-event-publish-rule', {
 });
 
 const eventLogger = nodeFunction(`backend-event-logger`, {
-  indexPath: './dist/backend/event-logger/index.js',
+  handlerPath: './dist/backend/event-logger/index.js',
   timeout: 120,
   memorySize: 256
 });
@@ -96,7 +96,7 @@ const tokenLambdaAuthorizer = awsx.classic.apigateway.getTokenLambdaAuthorizer({
   authorizerName: 'api-key-authorizer',
   header: 'Authorization',
   handler: nodeFunction(`api-key-authorizer`, {
-    indexPath: './dist/api/auth/api-key/index.js',
+    handlerPath: './dist/api/auth/api-key/index.js',
     requiresParameterStore: true,
     policyStatements: [withReadSecureParameter()]
   }),
@@ -109,7 +109,7 @@ const gateway = new awsx.classic.apigateway.API('event-sourcing-api', {
       path: '/streams/{streamId}',
       method: 'PUT',
       eventHandler: nodeFunction(`api-append-events`, {
-        indexPath: './dist/api/streams/append/index.js',
+        handlerPath: './dist/api/streams/append/index.js',
         policyStatements: [withReadDynamo(), withWriteDynamo()],
         timeout: 29,
         memorySize: 256,
@@ -121,7 +121,7 @@ const gateway = new awsx.classic.apigateway.API('event-sourcing-api', {
       path: '/streams/{streamId}',
       method: 'GET',
       eventHandler: nodeFunction(`api-read-events`, {
-        indexPath: './dist/api/streams/read/index.js',
+        handlerPath: './dist/api/streams/read/index.js',
         policyStatements: [withReadDynamo()],
         timeout: 29,
         memorySize: 256,

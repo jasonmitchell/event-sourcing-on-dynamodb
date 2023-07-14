@@ -11,7 +11,8 @@ type Environment = {
 };
 
 type FunctionOptions = {
-  indexPath: string;
+  handlerPath: string;
+  handler?: string;
   roleArn?: pulumi.Input<string>;
   policyStatements?: aws.iam.PolicyStatement[];
   memorySize?: number;
@@ -34,9 +35,9 @@ export const nodeFunction = (name: string, options: FunctionOptions) => {
     architectures: ['arm64'],
     runtime: 'nodejs18.x',
     code: new pulumi.asset.AssetArchive({
-      'index.js': new pulumi.asset.FileAsset(options.indexPath)
+      'index.js': new pulumi.asset.FileAsset(options.handlerPath)
     }),
-    handler: 'index.handler',
+    handler: options.handler || 'index.handler',
     role: lambdaRole,
     timeout: options.timeout || 3,
     memorySize: options.memorySize || 128,

@@ -8,16 +8,18 @@ const buildDirectories = process.argv.slice(2);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const findEntryPointsInDirectory = (dir, entryPointFileName) => {
+const findEntryPointsInDirectory = (dir, entryPointFileNamePatterns) => {
   const entryPoints = [];
 
   const directoryContents = fs.readdirSync(dir, { withFileTypes: true });
   directoryContents.forEach(entry => {
     if (entry.isDirectory()) {
-      const entryPointsUnderDir = findEntryPointsInDirectory(`${dir}/${entry.name}`, entryPointFileName);
+      const entryPointsUnderDir = findEntryPointsInDirectory(`${dir}/${entry.name}`, entryPointFileNamePatterns);
       entryPoints.push(...entryPointsUnderDir);
-    } else if (entry.name === entryPointFileName) {
-      entryPoints.push(`${dir}/${entry.name}`);
+    } else {
+      if (entryPointFileNamePatterns.find(pattern => entry.name.match(pattern) !== null)) {
+        entryPoints.push(`${dir}/${entry.name}`);
+      }
     }
   });
 
@@ -26,7 +28,7 @@ const findEntryPointsInDirectory = (dir, entryPointFileName) => {
 
 for (const dir of buildDirectories) {
   const rootDir = path.join(__dirname, `../src/${dir}`);
-  const entryPoints = findEntryPointsInDirectory(rootDir, 'index.ts');
+  const entryPoints = findEntryPointsInDirectory(rootDir, [/^index\.ts$/i, /.+\.lambda.ts$/i]);
 
   const result = await esbuild.build({
     entryPoints,
