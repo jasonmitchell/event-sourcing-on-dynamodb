@@ -34,12 +34,32 @@ describe('Event Store', () => {
     }
   });
 
-  xit('reads events from stream', async () => {
+  it('reads events from stream', async () => {
     const streamId = `index-${randomUUID()}`;
     const events = await writeEventsToStream(streamId, 10);
-    const retrievedEvents = await readEventsFromStream(streamId);
+    const stream = await eventStore.streamReader(streamId);
 
-    expect(retrievedEvents).toEqual(events);
+    expect(stream).toEqual({
+      id: streamId,
+      version: events.length - 1,
+      events: events.map(e => ({
+        id: e.id,
+        type: e.type,
+        data: e.data,
+        metadata: e.metadata
+      }))
+    });
+  });
+
+  it('reads empty stream', async () => {
+    const streamId = `index-${randomUUID()}`;
+    const stream = await eventStore.streamReader(streamId);
+
+    expect(stream).toEqual({
+      id: streamId,
+      version: 'no_stream',
+      events: []
+    });
   });
 
   const writeEventsToStream = async (streamId: string, numberOfEvents: number): Promise<EventRecord[]> => {

@@ -13,7 +13,7 @@ export type EventRecord = Event & {
   event_position: number;
 };
 
-export type EventData = object;
+export type EventData = Record<string, unknown>;
 
 export type EventMetadata = {
   correlationId?: string;

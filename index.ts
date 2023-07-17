@@ -7,7 +7,11 @@ import { withReadDynamo, withReadSecureParameter, withWriteDynamo } from './infr
 import { lambdaRole } from './infra/aws/iam/role';
 
 const apiKey = pulumi.secret(process.env.API_KEY as string);
-withSecureParameter('event-sourcing-api-key', apiKey, 'The API key used to authenticate with the API during early development');
+withSecureParameter(
+  'event-sourcing-api-key',
+  apiKey,
+  'The API key used to authenticate with the API during early development'
+);
 
 const awsSdkLayer = layerFromNodeModules('node-aws-sdk', './infra/layers/aws-sdk/node_modules/');
 
@@ -36,7 +40,10 @@ const table = new aws.dynamodb.Table('events', {
 
 // TODO: Tidy up eventbridge stuff
 const eventTranslatorRole = lambdaRole('event-translator-role', {
-  managedPolicyArns: [aws.iam.ManagedPolicies.AWSLambdaDynamoDBExecutionRole, aws.iam.ManagedPolicies.CloudWatchEventsFullAccess]
+  managedPolicyArns: [
+    aws.iam.ManagedPolicies.AWSLambdaDynamoDBExecutionRole,
+    aws.iam.ManagedPolicies.CloudWatchEventsFullAccess
+  ]
 });
 
 const eventTranslator = nodeFunction(`api-event-translator`, {
@@ -117,6 +124,18 @@ const gateway = new awsx.classic.apigateway.API('event-sourcing-api', {
       eventHandler: nodeFunction(`api-read-events`, {
         handlerPath: './dist/api/streams/read/index.js',
         policyStatements: [withReadDynamo()],
+        timeout: 29,
+        memorySize: 256,
+        layers: [awsSdkLayer.arn]
+      }),
+      authorizers: tokenLambdaAuthorizer
+    },
+    {
+      path: '/reservations',
+      method: 'POST',
+      eventHandler: nodeFunction(`api-request-reservation`, {
+        handlerPath: './dist/api/reservation/index.js',
+        policyStatements: [withReadDynamo(), withWriteDynamo()],
         timeout: 29,
         memorySize: 256,
         layers: [awsSdkLayer.arn]

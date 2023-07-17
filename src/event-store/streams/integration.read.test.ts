@@ -22,6 +22,13 @@ describe('Event Store', () => {
       expect(retrievedEvents).toEqual(events);
     });
 
+    it('reads empty stream', async () => {
+      const streamId = `read-stream-${randomUUID()}`;
+      const retrievedEvents = await readEventsFromStream(streamId);
+
+      expect(retrievedEvents).toEqual([]);
+    });
+
     describe('forwards', () => {
       it('reads stream', async () => {
         const [streamId] = await writeEventsToStream(10);

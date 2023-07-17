@@ -1,10 +1,14 @@
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { Event, EventRecord } from './streams/events';
-import { ReadDirection, readStream } from './streams/read';
+import { ReadDirection, StreamVersion, readStream } from './streams/read';
 import { ExpectedVersion, writeStream, WriteStreamResult } from './streams/write';
 
 export type StreamReader = (streamId: string, options?: ReadStreamOptions) => Promise<EventStream>;
-export type StreamWriter = (streamId: string, events: Event[], options?: WriteStreamOptions) => Promise<WriteStreamResult>;
+export type StreamWriter = (
+  streamId: string,
+  events: Event[],
+  options?: WriteStreamOptions
+) => Promise<WriteStreamResult>;
 
 export type ConnectionOptions = {
   client?: DynamoDB;
@@ -25,7 +29,7 @@ export type EventStoreOptions = {
 
 export type EventStream = {
   id: string;
-  version: number;
+  version: StreamVersion;
   events: Event[];
 };
 
@@ -68,7 +72,7 @@ const getStreamReader = (dynamoDB: DynamoDB, tableName: string): StreamReader =>
 
     return {
       id: streamId,
-      version: events.length > 0 ? events[events.length - 1].version : -1,
+      version: events.length > 0 ? events[events.length - 1].version : 'no_stream',
       events: events.map(event => ({
         id: event.id,
         type: event.type,
