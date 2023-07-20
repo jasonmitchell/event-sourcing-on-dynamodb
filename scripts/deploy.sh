@@ -20,6 +20,13 @@ fi
 
 export API_KEY=$(cat ./secrets.json | jq '.api_key' | sed -e 's/^"//' -e 's/"$//')
 export PULUMI_CONFIG_PASSPHRASE=
+export $(cat .env | xargs) > /dev/null
 
-pulumi login --local > /dev/null
+if [[ -z "${PULUMI_BACKEND_URL}" ]]; then
+  echo "PULUMI_BACKEND_URL is not set, using local stack management"
+  pulumi login --local > /dev/null
+else
+  pulumi login $PULUMI_BACKEND_URL
+fi
+
 pulumi up --skip-preview --stack event-sourcing-dev
