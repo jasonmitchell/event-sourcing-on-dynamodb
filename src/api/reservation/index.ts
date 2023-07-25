@@ -1,20 +1,16 @@
 import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { getRequestModel } from '../req';
-import { RequestReservation, handleCommand } from './model';
-import { randomUUID } from 'crypto';
+import { RequestReservation } from '../../domain/reservation';
 import { connect } from '../../event-store';
+import { requestReservation } from '../../domain/requestReservation';
 
 const eventStore = connect();
 
 export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
   const command = getRequestModel<RequestReservation>(event)!;
-  const reservationId = randomUUID();
-  const result = await handleCommand(eventStore, reservationId, {
-    type: 'RequestReservation',
-    data: command
-  });
+  const { reservationCreated, reservationId } = await requestReservation(eventStore, command);
 
-  if (!result.success) {
+  if (!reservationCreated) {
     return {
       statusCode: 409,
       body: JSON.stringify({ error: 'Failed to request reservation' })

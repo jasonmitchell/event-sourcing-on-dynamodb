@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
-import { EventSourcedEntity } from '../event-sourcing/event-sourced-entity';
-import { CommandHandler } from '../event-sourcing/command-handler';
+import { EventSourcedEntity } from '../api/event-sourcing/event-sourced-entity';
+import { CommandHandler } from '../api/event-sourcing/command-handler';
 
 export type RequestReservation = {
   customerId: string;
