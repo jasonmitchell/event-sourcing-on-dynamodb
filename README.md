@@ -1,5 +1,9 @@
 # Event Sourcing in DynamoDB
 
+## Prerequisites
+
+- [pnpm](https://pnpm.io/)
+
 ## Getting Started
 
 Run the following command to deploy the full infrastructure and service:

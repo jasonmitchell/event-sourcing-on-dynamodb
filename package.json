@@ -2,6 +2,7 @@
     "name": "event-sourcing-in-dynamo",
     "main": "index.ts",
     "scripts": {
+        "preinstall": "npx only-allow pnpm",
         "test": "jest --config=jest.config.js --detectOpenHandles --watchAll"
     },
     "devDependencies": {
