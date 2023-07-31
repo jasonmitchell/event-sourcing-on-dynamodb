@@ -16,7 +16,8 @@ export const handler = async (streamEvent: DynamoDBStreamEvent): Promise<void> =
       }),
       Resources: [e.eventSourceARN!],
       DetailType: event.type,
-      Source: 'demo-streams-api'
+      Source: 'demo-streams-api',
+      EventBusName: 'platform'
     };
   });
 

@@ -69,7 +69,16 @@ new aws.lambda.EventSourceMapping('event-translator-mapping', {
   }
 });
 
+const eventBus = new aws.cloudwatch.EventBus('platform-event-bus', {
+  name: 'platform'
+});
+
+new aws.schemas.Discoverer('event-discoverer', {
+  sourceArn: eventBus.arn
+});
+
 const eventRule = new aws.cloudwatch.EventRule('api-event-publish-rule', {
+  eventBusName: eventBus.arn,
   eventPattern: JSON.stringify({
     source: ['demo-streams-api']
   })
@@ -83,7 +92,8 @@ const eventLogger = nodeFunction(`backend-event-logger`, {
 
 new aws.cloudwatch.EventTarget('event-logger-target', {
   arn: eventLogger.arn,
-  rule: eventRule.name
+  rule: eventRule.name,
+  eventBusName: eventBus.arn
 });
 
 new aws.lambda.Permission('event-logger-target-permission', {
