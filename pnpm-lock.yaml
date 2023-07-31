@@ -11,6 +11,15 @@ dependencies:
   '@aws-sdk/client-eventbridge':
     specifier: ^3.370.0
     version: 3.370.0
+  '@middy/core':
+    specifier: ^4.5.5
+    version: 4.5.5
+  '@middy/http-error-handler':
+    specifier: ^4.5.5
+    version: 4.5.5
+  '@middy/http-json-body-parser':
+    specifier: ^4.5.5
+    version: 4.5.5
   '@pulumi/aws':
     specifier: ^5.42.0
     version: 5.42.0
@@ -23,6 +32,12 @@ dependencies:
   aws-lambda:
     specifier: ^1.0.7
     version: 1.0.7
+  lesslog:
+    specifier: ^0.2.7
+    version: 0.2.7
+  middy-lesslog:
+    specifier: ^2.0.3
+    version: 2.0.3(@middy/core@4.5.5)(lesslog@0.2.7)
 
 devDependencies:
   '@aws-sdk/types':
@@ -1402,6 +1417,30 @@ packages:
   /@logdna/tail-file@2.2.0:
     resolution: {integrity: sha512-XGSsWDweP80Fks16lwkAUIr54ICyBs6PsI4mpfTLQaWgEJRtY9xEV+PeyDpJ+sJEGZxqINlpmAwe/6tS1pP8Ng==}
     engines: {node: '>=10.3.0'}
+    dev: false
+
+  /@middy/core@4.5.5:
+    resolution: {integrity: sha512-aufpLnrpIcGrpd1cjqWR1fc5iSbO2K63GPkUooT+jtI/M7mofqSkr1dtfPx7fRtAFlZVuAjHCF52wJxGgfj1Ng==}
+    engines: {node: '>=16'}
+    dev: false
+
+  /@middy/http-error-handler@4.5.5:
+    resolution: {integrity: sha512-l3H2HhKau6T6v5fRcXEg18CdYzxBIBfNAkhhT3EOSeeAHqRxzjljv+R/5fPVRIDKFSOOxajbIGwJI/x+w8t6uQ==}
+    engines: {node: '>=16'}
+    dependencies:
+      '@middy/util': 4.5.5
+    dev: false
+
+  /@middy/http-json-body-parser@4.5.5:
+    resolution: {integrity: sha512-B3mtKk07ubpmKQNLHXmgqpdoFkKarhyjFeI66jVQyWTTseDvXrqsJaNNV6fdf/3jJPdBwr14ck1Y5JKNVbVdoA==}
+    engines: {node: '>=16'}
+    dependencies:
+      '@middy/util': 4.5.5
+    dev: false
+
+  /@middy/util@4.5.5:
+    resolution: {integrity: sha512-Dx4L/8cAvKqHKo7VA2oS3fv5nvGsDgGsgFfsvMZ/1p7+WkPCCyS2tWD0o/aioZiuLy0DTq8u1W6U0+8k8nQgpQ==}
+    engines: {node: '>=16'}
     dev: false
 
   /@opentelemetry/api-metrics@0.32.0:
@@ -3575,6 +3614,10 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
+  /lesslog@0.2.7:
+    resolution: {integrity: sha512-ljNlnLMtR08gFKALLwKSNO0pGHomiXvwBKI8M40ZnxpX8EiaacN5gJI6vSN83Usbiuwv8YHTTNcJGBrMPdKtow==}
+    dev: false
+
   /leven@3.1.0:
     resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
     engines: {node: '>=6'}
@@ -3652,6 +3695,16 @@ packages:
       braces: 3.0.2
       picomatch: 2.3.1
     dev: true
+
+  /middy-lesslog@2.0.3(@middy/core@4.5.5)(lesslog@0.2.7):
+    resolution: {integrity: sha512-1OByNSoNpH+1ub9l2eWql+cliMYGeupEphjXeGHmRO6Ifua6AAOApiQz3Qb1j5aeSn00HLyq6u/itZcIs4l6sg==}
+    peerDependencies:
+      '@middy/core': ^2.4.3
+      lesslog: ^0.2.3
+    dependencies:
+      '@middy/core': 4.5.5
+      lesslog: 0.2.7
+    dev: false
 
   /mime@2.6.0:
     resolution: {integrity: sha512-USPkMeET31rOMiarsBNIHZKLGgvKc/LrjofAnBlOttf5ajRvqiRA8QsenbcooctK6d6Ts6aqZXBA+XbkKthiQg==}

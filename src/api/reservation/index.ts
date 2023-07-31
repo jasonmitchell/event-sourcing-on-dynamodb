@@ -1,14 +1,21 @@
-import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { getRequestModel } from '../req';
+import { APIEventOf, APIResult } from '../req';
 import { RequestReservation } from '../../domain/reservation';
 import { connect } from '../../event-store';
 import { requestReservation } from '../../domain/requestReservation';
+import middy from '@middy/core';
+import httpJsonBodyParser from '@middy/http-json-body-parser';
+import httpErrorHandler from '@middy/http-error-handler';
+import log from 'middy-lesslog';
+import { info } from 'lesslog';
 
 const eventStore = connect();
 
-export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
-  const command = getRequestModel<RequestReservation>(event)!;
+const createReservation = async (event: APIEventOf<RequestReservation>): Promise<APIResult> => {
+  const command = event.body;
+
+  info('Requesting reservation', { command });
   const { reservationCreated, reservationId } = await requestReservation(eventStore, command);
+  info('Reservation created', { reservationId });
 
   if (!reservationCreated) {
     return {
@@ -22,3 +29,5 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
     body: JSON.stringify({ reservationId })
   };
 };
+
+export const handler = middy(createReservation).use(log()).use(httpErrorHandler()).use(httpJsonBodyParser());
