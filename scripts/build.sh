@@ -2,7 +2,7 @@
 
 rm -rf dist
 
-node ./scripts/build.mjs api backend
+node ./scripts/build.mjs api backend event-translator
 if [ $? -ne 0 ]; then
   echo "Build failed"
   exit 1

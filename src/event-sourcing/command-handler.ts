@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
-import { EventStore } from '../../event-store';
-import { Event } from '../../event-store/streams/events';
+import { EventStore } from '../event-store';
+import { Event } from '../event-store/streams/events';
 import { Command, DomainEvent, EventSourcedEntity } from './event-sourced-entity';
 
 type CommandResult = {

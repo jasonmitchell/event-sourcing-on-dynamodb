@@ -46,8 +46,8 @@ const eventTranslatorRole = lambdaRole('event-translator-role', {
   ]
 });
 
-const eventTranslator = nodeFunction(`api-event-translator`, {
-  handlerPath: './dist/api/event-translator/index.js',
+const eventTranslator = nodeFunction(`event-translator`, {
+  handlerPath: './dist/event-translator/index.js',
   timeout: 120,
   memorySize: 256,
   roleArn: eventTranslatorRole.arn,
@@ -106,30 +106,6 @@ const tokenLambdaAuthorizer = awsx.classic.apigateway.getTokenLambdaAuthorizer({
 
 const gateway = new awsx.classic.apigateway.API('event-sourcing-api', {
   routes: [
-    {
-      path: '/streams/{streamId}',
-      method: 'PUT',
-      eventHandler: nodeFunction(`api-append-events`, {
-        handlerPath: './dist/api/streams/append/index.js',
-        policyStatements: [withReadDynamo(), withWriteDynamo()],
-        timeout: 29,
-        memorySize: 256,
-        layers: [awsSdkLayer.arn]
-      }),
-      authorizers: tokenLambdaAuthorizer
-    },
-    {
-      path: '/streams/{streamId}',
-      method: 'GET',
-      eventHandler: nodeFunction(`api-read-events`, {
-        handlerPath: './dist/api/streams/read/index.js',
-        policyStatements: [withReadDynamo()],
-        timeout: 29,
-        memorySize: 256,
-        layers: [awsSdkLayer.arn]
-      }),
-      authorizers: tokenLambdaAuthorizer
-    },
     {
       path: '/reservations',
       method: 'POST',

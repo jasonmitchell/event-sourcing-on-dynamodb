@@ -1,7 +1,5 @@
-import { Parameter } from '../configuration';
-
 // TODO: error handling
-const getParameter = async (name: Parameter, withDecryption: boolean): Promise<string> => {
+const getParameter = async (name: string, withDecryption: boolean): Promise<string> => {
   const parameterUrl = `http://localhost:2773/systemsmanager/parameters/get/?name=${name}&withDecryption=${withDecryption}`;
   const response = await fetch(parameterUrl, {
     headers: {
@@ -13,6 +11,6 @@ const getParameter = async (name: Parameter, withDecryption: boolean): Promise<s
   return data.Parameter.Value as string;
 };
 
-export const getEncryptedParameter = async (name: Parameter): Promise<string> => {
+export const getEncryptedParameter = async (name: string): Promise<string> => {
   return getParameter(name, true);
 };

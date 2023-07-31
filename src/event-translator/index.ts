@@ -1,5 +1,5 @@
 import { DynamoDBStreamEvent } from 'aws-lambda';
-import { dynamoRecordToEvent } from '../../event-store/streams/events';
+import { dynamoRecordToEvent } from '../event-store/streams/events';
 import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
 
 const eventBridgeClient = new EventBridgeClient({ region: 'eu-west-1' });
