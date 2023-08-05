@@ -50,7 +50,14 @@ export const nodeFunction = (name: string, options: FunctionOptions) => {
     }
   };
 
-  return new aws.lambda.Function(name, lambdaArgs);
+  const lambda = new aws.lambda.Function(name, lambdaArgs);
+
+  new aws.cloudwatch.LogGroup(`${name}-log-group`, {
+    name: `/aws/lambda/${name}`,
+    retentionInDays: 14,
+  });
+
+  return lambda;
 };
 
 const roleForStatements = (name: string, statements?: aws.iam.PolicyStatement[]) => {

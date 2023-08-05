@@ -26,17 +26,11 @@ The stack can be torn down using the following command:
 ./scripts/destroy.sh
 ```
 
-## Append Events to a Stream
+## Make a request
 
 ```
-curl -X PUT -i https://{api id}.execute-api.{region}.amazonaws.com/stage/streams/test-abcd1234  \
-  -H "Content-Type: application/json" -d '[{"type": "EventA", "data": {"someProp": 1234}}, {"type": "EventB", "data": {"someOtherProp": "abcd"}}]' \
-  -H "Authorization: ..."
-```
 
-## Read Events from a Stream
-
-```
-curl -X GET -i https://{api id}.execute-api.{region}.amazonaws.com/stage/streams/test-abcd1234  \
-  -H "Authorization: ..."
+curl -X POST -i  https://{api id}.execute-api.{region}.amazonaws.com/stage/reservations  \               ✔
+  -H "Content-Type: application/json" -d '{"customerId": "abcd1234", "seats": ["A1","A2"]}' \
+  -H "Authorization: {api_key from secrets.json"
 ```
