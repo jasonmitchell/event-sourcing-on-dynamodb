@@ -117,6 +117,13 @@ const tokenLambdaAuthorizer = awsx.classic.apigateway.getTokenLambdaAuthorizer({
 const gateway = new awsx.classic.apigateway.API('event-sourcing-api', {
   routes: [
     {
+      path: '/{proxy+}',
+      method: 'ANY',
+      eventHandler: nodeFunction(`api-not-found`, {
+        handlerPath: './dist/api/not-found.lambda.js'
+      })
+    },
+    {
       path: '/reservations',
       method: 'POST',
       eventHandler: nodeFunction(`api-request-reservation`, {
