@@ -5,6 +5,7 @@ import { withSecureParameter } from './infra/aws/parameter-store';
 import { layerFromNodeModules, nodeFunction } from './infra/aws/lambda';
 import { withReadDynamo, withReadSecureParameter, withWriteDynamo } from './infra/aws/iam/policy';
 import { lambdaRole } from './infra/aws/iam/role';
+import { deployApiGatewayAccountSettings } from './infra/aws/api-gateway';
 
 const apiKey = pulumi.secret(process.env.API_KEY as string);
 withSecureParameter(
@@ -114,6 +115,11 @@ const tokenLambdaAuthorizer = awsx.classic.apigateway.getTokenLambdaAuthorizer({
   authorizerResultTtlInSeconds: 0
 });
 
+const apiGatewayLogGroup = new aws.cloudwatch.LogGroup(`api-gateway-access-logs`, {
+  name: '/event-sourcing-on-dynamodb/api-gateway/access-logs',
+  retentionInDays: 14
+});
+
 const gateway = new awsx.classic.apigateway.API('event-sourcing-api', {
   routes: [
     {
@@ -135,8 +141,31 @@ const gateway = new awsx.classic.apigateway.API('event-sourcing-api', {
       }),
       authorizers: tokenLambdaAuthorizer
     }
-  ]
+  ],
+  stageArgs: {
+    accessLogSettings: {
+      destinationArn: apiGatewayLogGroup.arn,
+      format:
+        '$context.identity.sourceIp $context.identity.caller  \
+$context.identity.user [$context.requestTime] \
+"$context.httpMethod $context.resourcePath $context.protocol" \
+$context.status $context.responseLength $context.requestId $context.extendedRequestId'
+    }
+  }
+});
+
+deployApiGatewayAccountSettings();
+new aws.apigateway.MethodSettings('method-settings', {
+  restApi: gateway.restAPI,
+  stageName: gateway.stage.stageName,
+  methodPath: '*/*', // applies to all methods
+  settings: {
+    metricsEnabled: true,
+    loggingLevel: 'OFF',
+    dataTraceEnabled: true // this will enable detailed CloudWatch metrics
+  }
 });
 
 export const apiId = gateway.restAPI.id;
+export const stageName = gateway.stage.stageName;
 export const url = gateway.url;
