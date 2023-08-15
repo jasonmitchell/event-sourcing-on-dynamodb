@@ -7,6 +7,7 @@ import httpJsonBodyParser from '@middy/http-json-body-parser';
 import httpErrorHandler from '@middy/http-error-handler';
 import log from 'middy-lesslog';
 import { info } from 'lesslog';
+import httpSecurityHeaders from '@middy/http-security-headers';
 
 const eventStore = connect();
 
@@ -30,4 +31,8 @@ const createReservation = async (event: APIEventOf<RequestReservation>): Promise
   };
 };
 
-export const handler = middy(createReservation).use(log()).use(httpErrorHandler()).use(httpJsonBodyParser());
+export const handler = middy(createReservation)
+  .use(log())
+  .use(httpErrorHandler())
+  .use(httpJsonBodyParser())
+  .use(httpSecurityHeaders());

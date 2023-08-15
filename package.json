@@ -23,6 +23,7 @@
         "@middy/core": "^4.5.5",
         "@middy/http-error-handler": "^4.5.5",
         "@middy/http-json-body-parser": "^4.5.5",
+        "@middy/http-security-headers": "^4.6.0",
         "@pulumi/aws": "^5.42.0",
         "@pulumi/awsx": "^1.0.2",
         "@pulumi/pulumi": "^3.76.1",

@@ -20,6 +20,9 @@ dependencies:
   '@middy/http-json-body-parser':
     specifier: ^4.5.5
     version: 4.5.5
+  '@middy/http-security-headers':
+    specifier: ^4.6.0
+    version: 4.6.0
   '@pulumi/aws':
     specifier: ^5.42.0
     version: 5.42.0
@@ -1439,8 +1442,20 @@ packages:
       '@middy/util': 4.5.5
     dev: false
 
+  /@middy/http-security-headers@4.6.0:
+    resolution: {integrity: sha512-GvEo+itw+vQKrW/4bMEgHi+RChFRCs3Cbc5DUyM1+EUI8uxuE3YamOea/crWPtgq3K8n5s3AmP/gNFEHljoWmw==}
+    engines: {node: '>=16'}
+    dependencies:
+      '@middy/util': 4.6.0
+    dev: false
+
   /@middy/util@4.5.5:
     resolution: {integrity: sha512-Dx4L/8cAvKqHKo7VA2oS3fv5nvGsDgGsgFfsvMZ/1p7+WkPCCyS2tWD0o/aioZiuLy0DTq8u1W6U0+8k8nQgpQ==}
+    engines: {node: '>=16'}
+    dev: false
+
+  /@middy/util@4.6.0:
+    resolution: {integrity: sha512-ac0jrKscxudiTIl2Fs9Y8qEYOtJq6nrN6hZYROMMeSWq4cp315UGHBZ/68sQkpZdXgS6KJpcR2fg+Khz0zsCkg==}
     engines: {node: '>=16'}
     dev: false
 
