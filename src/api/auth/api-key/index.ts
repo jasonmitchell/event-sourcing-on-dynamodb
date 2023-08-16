@@ -3,12 +3,18 @@ import { getEncryptedParameter } from '../../../aws/parameter-store';
 
 const getApiKey = getEncryptedParameter('event-sourcing-api-key');
 
-export const handler = async (event: APIGatewayTokenAuthorizerEvent, context: Context): Promise<APIGatewayAuthorizerResult> => {
+export const handler = async (
+  event: APIGatewayTokenAuthorizerEvent,
+  context: Context
+): Promise<APIGatewayAuthorizerResult> => {
   const apiKey = await getApiKey;
   const effect = event.authorizationToken === apiKey ? 'Allow' : 'Deny';
 
   return {
     principalId: 'some-user-id',
+    context: {
+      role: 'dev'
+    },
     policyDocument: {
       Version: '2012-10-17',
       Statement: [
