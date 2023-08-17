@@ -6,8 +6,9 @@ import middy from '@middy/core';
 import httpJsonBodyParser from '@middy/http-json-body-parser';
 import httpErrorHandler from '@middy/http-error-handler';
 import log from 'middy-lesslog';
-import { set, info } from 'lesslog';
+import { info } from 'lesslog';
 import httpSecurityHeaders from '@middy/http-security-headers';
+import { requestContext } from '../middleware/request-context';
 
 const eventStore = connect();
 
@@ -33,10 +34,7 @@ const createReservation = async (event: APIEventOf<RequestReservation>): Promise
 
 export const handler = middy(createReservation)
   .use(log())
-  .before(async request => {
-    set('userId', request.event.requestContext.authorizer?.principalId);
-    set('requestId', request.event.requestContext.requestId);
-  })
+  .use(requestContext())
   .use(httpErrorHandler())
   .use(httpJsonBodyParser())
   .use(httpSecurityHeaders());
