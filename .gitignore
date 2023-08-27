@@ -1,6 +1,7 @@
 dist/
 node_modules/
 .idea/
+.aws-sam/
 .DS_Store
 secrets.json
 .env

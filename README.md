@@ -34,3 +34,8 @@ curl -X POST -i  https://{api id}.execute-api.{region}.amazonaws.com/stage/reser
   -H "Content-Type: application/json" -d '{"customerId": "abcd1234", "seats": ["A1","A2"]}' \
   -H "Authorization: {api_key from secrets.json"
 ```
+
+## Run Local
+```bash
+sam local start-api -t template.yaml
+```

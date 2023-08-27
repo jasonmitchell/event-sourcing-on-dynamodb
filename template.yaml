@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: test
+Transform:
+- AWS::Serverless-2016-10-31
+
+Resources:
+  sample:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: ./dist/api/sample/index.handler
+      Runtime: nodejs18.x
+      Architectures:
+        - arm64
+      MemorySize: 128
+      Timeout: 100
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /sample
+            Method: GET

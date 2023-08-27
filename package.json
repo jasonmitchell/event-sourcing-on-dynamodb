@@ -3,7 +3,9 @@
     "main": "index.ts",
     "scripts": {
         "preinstall": "npx only-allow pnpm",
-        "test": "jest --config=jest.config.js --detectOpenHandles --watchAll"
+        "test": "jest --config=jest.config.js --detectOpenHandles --watchAll",
+        "build": "./scripts/build.sh",
+        "start": "npm run build && sam local start-api -t template.yaml"
     },
     "devDependencies": {
         "@aws-sdk/types": "^3.378.0",
